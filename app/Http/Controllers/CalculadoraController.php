@@ -60,6 +60,7 @@ class CalculadoraController extends Controller
             'Maura Benavides'  => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
             'Stefany Mejia'   => ['cargo' => 'Jefa de Ventas', 'tel' => '8998-0892'],
             'Henrry Gutierrez' => ['cargo' => 'Representante de Ventas', 'tel' => '82529465'],
+             'Maura Benavides'  => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
         ];
 
         if (array_key_exists($responsableNombre, $firmas)) {
