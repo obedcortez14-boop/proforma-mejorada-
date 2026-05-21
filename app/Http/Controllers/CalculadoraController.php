@@ -57,7 +57,7 @@ class CalculadoraController extends Controller
         $responsableNombre = $request->input('responsable_nombre') ?? $request->input('pdf_firma_nombre');
         $firmas = [
             'Jammy Silva'     => ['cargo' => 'Arquitecta Coordinadora', 'tel' => '8588-5337'],
-            'Owen Rodriguez'  => ['cargo' => 'Arquitecto Supervisor', 'tel' => '8888-0000'],
+            'Maura Benavides'  => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
             'Stefany Mejia'   => ['cargo' => 'Jefa de Ventas', 'tel' => '8998-0892'],
             'Henrry Mendoza'  => ['cargo' => 'Representante de Ventas', 'tel' => '82529461'],
             'Henrry Gutierrez' => ['cargo' => 'Representante de Ventas', 'tel' => '82529465'],
