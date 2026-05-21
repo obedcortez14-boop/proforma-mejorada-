@@ -59,7 +59,6 @@ class CalculadoraController extends Controller
             'Jammy Silva'     => ['cargo' => 'Arquitecta Coordinadora', 'tel' => '8588-5337'],
             'Maura Benavides'  => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
             'Stefany Mejia'   => ['cargo' => 'Jefa de Ventas', 'tel' => '8998-0892'],
-            'Henrry Mendoza'  => ['cargo' => 'Representante de Ventas', 'tel' => '82529461'],
             'Henrry Gutierrez' => ['cargo' => 'Representante de Ventas', 'tel' => '82529465'],
         ];
 
