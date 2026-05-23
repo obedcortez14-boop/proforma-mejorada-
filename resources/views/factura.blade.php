@@ -24,6 +24,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            /* Quitamos table-layout: fixed para que el centro pueda expandirse */
         }
 
         .header-table td {
@@ -93,7 +94,7 @@
         .grid { width: 100%; border-collapse: collapse; }
         .col { width: 50%; vertical-align: top; }
         .label { font-size: 9px; font-weight: bold; color: #3d5229; text-transform: uppercase; margin-bottom: 4px; }
-        .value { border-bottom: 1px solid #edf2f7; padding: 6px 0; margin-bottom: 20px; font-size: 12px; color: #2d3748; min-height: 18px; }
+        .value { border-bottom: 1px solid #edf2f7; padding: 6px 0; margin-bottom: 20px; font-size: 12px; color: #2d3748; }
 
         /* Tabla de Items */
         .items-table { width: calc(100% - 100px); margin: 0 50px; border-collapse: collapse; }
@@ -132,13 +133,14 @@
                     </div>
                 </td>
 
-                <td style="width: 20%;">
-                    <div class="info-box">
-                        <div class="no-label">PROFORMA NO.</div>
-                        <div class="no-number">{{ $nuevoContador }}</div>
-                        <div class="date-line">FECHA: {{ $fecha }}</div>
-                    </div>
-                </td>
+               <td style="width: 20%;">
+    <div class="info-box">
+        <div class="no-label">PROFORMA NO.</div>
+        {{-- Cambiamos el número fijo por la variable de Firebase --}}
+        <div class="no-number">{{ $nuevoContador }}</div>
+        <div class="date-line">FECHA: {{ $fecha }}</div>
+    </div>
+</td>
             </tr>
         </table>
     </div>
@@ -151,14 +153,12 @@
                 <td class="col">
                     <div class="label">Cliente</div>
                     <div class="value">{{ $cliente ?? 'N/A' }}</div>
-
                     <div class="label">RUC / Cédula</div>
                     <div class="value">{{ $ruc ?? 'N/A' }}</div>
                 </td>
                 <td class="col" style="padding-left: 50px;">
                     <div class="label">Contacto</div>
                     <div class="value">{{ $contacto ?? 'N/A' }}</div>
-
                     <div class="label">Teléfono</div>
                     <div class="value">{{ $telefono ?? 'N/A' }}</div>
                 </td>
@@ -166,7 +166,7 @@
             <tr>
                 <td colspan="2">
                     <div class="label">Dirección del Proyecto</div>
-                    <div class="value">{{ $direccion_proyecto ?? $direccion ?? 'N/A' }}</div>
+                    <div class="value">{{ $direccion ?? 'N/A' }}</div>
                 </td>
             </tr>
         </table>
