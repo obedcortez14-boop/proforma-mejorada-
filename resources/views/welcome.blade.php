@@ -87,12 +87,27 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
             </div>
 
             <div class="bg-red-600 h-1.5 w-40 mx-auto -mt-0.5 relative z-20 rounded-full shadow-lg"></div>
-
-            <div class="p-12 grid grid-cols-2 gap-x-16 gap-y-8 text-sm">
-                <div class="space-y-1.5"><label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Cliente</label><input type="text" name="cliente" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent"></div>
-                <div class="space-y-1.5"><label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Contacto</label><input type="text" name="contacto" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent"></div>
-                <div class="space-y-1.5"><label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">RUC / Cédula</label><input type="text" name="ruc" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent"></div>
-                <div class="space-y-1.5"><label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Teléfono</label><input type="text" name="telefono" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent"></div>
+<div class="p-12 grid grid-cols-2 gap-x-16 gap-y-8 text-sm">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Cliente</label>
+                    <input type="text" name="cliente" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Contacto</label>
+                    <input type="text" name="contacto" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">RUC / Cédula</label>
+                    <input type="text" name="ruc" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Teléfono</label>
+                    <input type="text" name="telefono" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Dirección del proyecto</label>
+                    <input type="text" name="direccion_proyecto" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
             </div>
 
             <div class="px-10">
