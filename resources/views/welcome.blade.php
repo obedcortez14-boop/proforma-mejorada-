@@ -64,7 +64,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Responsable</label>
                 <select id="selector-usuario" name="responsable_nombre" onchange="actualizarFirma()" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-2.5 font-bold outline-none">
                     <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337">Jammy Silva</option>
-                    <option value="Owen Rodriguez" data-cargo="Arquitecto Supervisor" data-tel="58859291">Owen Rodriguez</option>
+                    <option value="Maura Benavides" data-cargo="Arquitecto Supervisor" data-tel="8560-0648">Maura Benavides</option>
                     <option value="Stefany Mejia" data-cargo="Jefa de Ventas" data-tel="8998-0892">Stefany Mejia</option>
                     <option value="Henrry Gutierrez" data-cargo="Representante de Ventas" data-tel="82529465">Henry Gutierrez</option>
                 </select>
