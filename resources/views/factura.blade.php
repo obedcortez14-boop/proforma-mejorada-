@@ -24,7 +24,6 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            /* Quitamos table-layout: fixed para que el centro pueda expandirse */
         }
 
         .header-table td {
@@ -133,14 +132,13 @@
                     </div>
                 </td>
 
-               <td style="width: 20%;">
-    <div class="info-box">
-        <div class="no-label">PROFORMA NO.</div>
-        {{-- Cambiamos el número fijo por la variable de Firebase --}}
-        <div class="no-number">{{ $nuevoContador }}</div>
-        <div class="date-line">FECHA: {{ $fecha }}</div>
-    </div>
-</td>
+                <td style="width: 20%;">
+                    <div class="info-box">
+                        <div class="no-label">PROFORMA NO.</div>
+                        <div class="no-number">{{ $nuevoContador }}</div>
+                        <div class="date-line">FECHA: {{ $fecha }}</div>
+                    </div>
+                </td>
             </tr>
         </table>
     </div>
@@ -166,7 +164,7 @@
             <tr>
                 <td colspan="2">
                     <div class="label">Dirección del Proyecto</div>
-                    <div class="value">{{ $direccion ?? 'N/A' }}</div>
+                    <div class="value">{{ $direccion_proyecto ?? $direccion ?? 'N/A' }}</div>
                 </td>
             </tr>
         </table>
