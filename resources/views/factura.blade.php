@@ -96,9 +96,22 @@
         .value { border-bottom: 1px solid #edf2f7; padding: 6px 0; margin-bottom: 20px; font-size: 12px; color: #2d3748; }
 
         /* Tabla de Items */
-        .items-table { width: calc(100% - 100px); margin: 0 50px; border-collapse: collapse; }
+        .items-table {
+            width: calc(100% - 100px);
+            margin: 0 50px;
+            border-collapse: collapse;
+            table-layout: fixed; /* Fuerza a respetar los porcentajes de ancho asignados */
+        }
         .items-table th { background-color: #3d5229; color: white; font-size: 10px; text-transform: uppercase; padding: 12px; text-align: center; }
         .items-table td { border: 1px solid #f1f5f9; padding: 10px; font-size: 11px; }
+
+        /* Propiedades de ajuste para evitar desbordamiento en la descripción */
+        .col-descripcion {
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-line;
+            vertical-align: top;
+        }
 
         /* Totales */
         .totals-table { margin-top: 25px; margin-left: auto; width: 35%; margin-right: 50px; border-collapse: collapse; }
@@ -182,10 +195,10 @@
         <tbody>
             @foreach($items as $item)
             <tr>
-                <td>{{ $item['desc'] }}</td>
-                <td style="text-align: center; font-weight: bold;">{{ $item['cant'] }}</td>
-                <td style="text-align: right;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['precio'], 2) }}</td>
-                <td style="text-align: right; font-weight: bold;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['cant'] * $item['precio'], 2) }}</td>
+                <td class="col-descripcion">{{ $item['desc'] }}</td>
+                <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['cant'] }}</td>
+                <td style="text-align: right; vertical-align: top;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['precio'], 2) }}</td>
+                <td style="text-align: right; font-weight: bold; vertical-align: top;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['cant'] * $item['precio'], 2) }}</td>
             </tr>
             @endforeach
         </tbody>
