@@ -79,7 +79,8 @@ class CalculadoraController extends Controller
             'contacto'           => $request->input('contacto'),
             'ruc'                => $request->input('ruc'),
             'telefono'           => $request->input('telefono'),
-            'direccion'          => $request->input('direccion'),
+            // CORRECCIÓN: Captura el nombre exacto que pusimos en el formulario HTML
+            'direccion_proyecto' => $request->input('direccion_proyecto') ?? $request->input('direccion'),
             'items'              => $request->input('items') ?? [],
             'subtotal'           => (float) $request->input('subtotal_val', 0),
             'descuento'          => (float) $request->input('descuento_val', 0),
