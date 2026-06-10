@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class CalculadoraController extends Controller
 {
     public function generarPDF(Request $request)
     {
         // =====================================================
-        // 1. LÓGICA DE FIREBASE (LECTURA Y INCREMENTO)
+        // 1. LÓGICA DE FIREBASE (LECTURA Y SUMA)
         // =====================================================
         $rutaFirebase = "https://proforma-ready-default-rtdb.firebaseio.com/contador_pdf.json";
 
@@ -42,10 +41,10 @@ class CalculadoraController extends Controller
         curl_setopt($chUpdate, CURLOPT_SSL_VERIFYPEER, false);
         curl_exec($chUpdate);
         curl_close($chUpdate);
+        // =====================================================
 
-        // =====================================================
-        // 2. MANEJO DEL LOGO CORPORATIVO
-        // =====================================================
+
+        // 2. Manejo del Logo
         $logo = null;
         $logoPath = public_path('imagen/LOGO JPG.jpg');
         if (file_exists($logoPath)) {
@@ -54,29 +53,24 @@ class CalculadoraController extends Controller
             $logo = 'data:image/' . $extension . ';base64,' . $logoData;
         }
 
-        // =====================================================
-        // 3. MAPEO DE RESPONSABLES Y ASIGNACIÓN DE CARGOS
-        // =====================================================
+        // 3. Mapeo de responsables
         $responsableNombre = $request->input('responsable_nombre') ?? $request->input('pdf_firma_nombre');
-
         $firmas = [
-            'Jammy Silva'      => ['cargo' => 'Arquitecta Coordinadora', 'tel' => '8588-5337'],
+            'Jammy Silva'     => ['cargo' => 'Arquitecta Coordinadora', 'tel' => '8588-5337'],
             'Maura Benavides'  => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
-            'Stefany Mejia'    => ['cargo' => 'Jefa de Ventas', 'tel' => '8998-0892'],
+            'Stefany Mejia'   => ['cargo' => 'Jefa de Ventas', 'tel' => '8998-0892'],
             'Henrry Gutierrez' => ['cargo' => 'Representante de Ventas', 'tel' => '82529465'],
         ];
 
         if (array_key_exists($responsableNombre, $firmas)) {
             $cargo = $firmas[$responsableNombre]['cargo'];
-            $tel   = $firmas[$responsableNombre]['tel'];
+            $tel = $firmas[$responsableNombre]['tel'];
         } else {
             $cargo = $request->input('pdf_firma_cargo', 'Coordinador');
-            $tel   = $request->input('pdf_firma_tel', '0000-0000');
+            $tel = $request->input('pdf_firma_tel', '0000-0000');
         }
 
-        // =====================================================
-        // 4. PREPARACIÓN DEL ARRAY DE DATOS FINALES
-        // =====================================================
+        // 4. Preparación del array de datos (Pasamos las condiciones dinámicas)
         $data = [
             'logo'               => $logo,
             'nuevoContador'      => $nuevoContador,
@@ -94,20 +88,18 @@ class CalculadoraController extends Controller
             'responsable_nombre' => $responsableNombre,
             'responsable_cargo'  => $cargo,
             'responsable_tel'    => $tel,
-            'fecha'              => Carbon::now('America/Managua')->format('d/m/Y'),
+            'fecha'              => date('d/m/Y'),
 
-            // Texto plano dinámico editable recibido desde el frontend
-            'condiciones'        => $request->input('condiciones') ?? "• Vigencia de la cotización: 30 días calendario.\n• Se requiere el 50% de anticipo para iniciar el proyecto.\n• El 50% restante se cancelará contra entrega del trabajo.\n• Tiempo de entrega estimado: 5 a 7 días hábiles.\n• Precios sujetos a cambios sin previo aviso.",
+            // =========================================================================
+// CAMBIO AQUÍ: Recibir texto plano (String) en vez de un array vacío
+// =========================================================================
+'condiciones' => $request->input('condiciones') ?? "• Vigencia de la cotización: 30 días calendario.\n• Se requiere el 50% de anticipo para iniciar el proyecto.\n• El 50% restante se cancelará contra entrega del trabajo.\n• Tiempo de entrega estimado: 5 a 7 días hábiles.\n• Precios sujetos a cambios sin previo aviso.",
         ];
 
-        // =====================================================
-        // 5. RENDERIZADO Y DESCARGA DEL ARCHIVO PDF
-        // =====================================================
         $pdf = Pdf::loadView('factura', $data);
-        $pdf->setPaper('letter', 'portrait'); // Cambiado a 'letter' (Tamaño Carta) para coincidir con tus estilos @page
+        $pdf->setPaper('A4', 'portrait');
 
         $nombreArchivo = 'Proforma_Ready_' . ($request->input('cliente') ?? 'SinNombre') . '.pdf';
-
         return $pdf->download($nombreArchivo);
     }
 }
