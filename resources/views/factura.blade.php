@@ -4,39 +4,41 @@
     <meta charset="UTF-8">
     <title>Proforma Ready</title>
     <style>
-        @page { margin: 0; }
+        @page {
+            size: letter;
+            margin: 8mm 10mm;
+        }
         body {
-            font-family: 'Helvetica', sans-serif;
-            color: #333;
+            font-family: 'Helvetica', Arial, sans-serif;
+            color: #2d3748;
             margin: 0;
             padding: 0;
             background-color: white;
+            font-size: 9.5px;
+            line-height: 1.25;
         }
 
-        /* Encabezado: Tabla flexible para evitar cortes de texto */
+        /* Encabezado compacto */
         .header {
             background-color: #3d5229;
             color: white;
-            padding: 40px 50px 50px 50px;
-            position: relative;
+            padding: 10px 15px;
+            border-radius: 6px;
         }
-
         .header-table {
             width: 100%;
             border-collapse: collapse;
         }
-
         .header-table td {
             vertical-align: middle;
         }
 
-        /* Contenedor del Logo (Izquierda) */
+        /* Contenedor del Logo */
         .logo-box {
             background: white;
-            padding: 10px;
-            border-radius: 12px;
-            width: 130px; /* Tamaño controlado */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            padding: 4px;
+            border-radius: 4px;
+            width: 75px;
             text-align: center;
         }
         .logo-box img {
@@ -45,107 +47,147 @@
             display: block;
         }
 
-        /* Título Central - Ajustado para que no se solape */
+        /* Título Central */
         .title-td {
             text-align: center;
-            padding: 0 20px;
         }
         .proforma-title {
-            font-size: 24px; /* Un poco más grande para destacar */
+            font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 1.5px;
             font-weight: bold;
-            border-top: 1px solid rgba(255,255,255,0.4);
-            border-bottom: 1px solid rgba(255,255,255,0.4);
-            padding: 15px 10px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding: 4px 10px;
             display: inline-block;
-            line-height: 1.2;
         }
 
-        /* Recuadro de Información (Derecha) */
+        /* Recuadro de Información */
         .info-box {
             background: white;
             color: #333;
-            padding: 12px;
-            border-radius: 12px;
-            width: 150px;
-            margin-left: auto; /* Empuja a la derecha */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            padding: 5px;
+            border-radius: 4px;
+            width: 100px;
+            margin-left: auto;
             text-align: center;
         }
-        .info-box .no-label { font-size: 9px; font-weight: bold; color: #666; letter-spacing: 1px; }
-        .info-box .no-number { font-size: 22px; font-weight: bold; color: #e63946; margin: 2px 0; }
-        .info-box .date-line { border-top: 1px solid #eee; padding-top: 6px; font-size: 9px; color: #888; font-weight: bold; }
+        .info-box .no-label { font-size: 7.5px; font-weight: bold; color: #666; letter-spacing: 0.5px; }
+        .info-box .no-number { font-size: 13px; font-weight: bold; color: #e63946; margin: 1px 0; }
+        .info-box .date-line { border-top: 1px solid #eee; padding-top: 2px; font-size: 7.5px; color: #888; font-weight: bold; }
 
-        /* Barra Roja Decorativa */
         .red-bar {
             background-color: #e63946;
-            height: 8px;
-            width: 30%;
-            margin: -4px auto 0;
-            position: relative;
-            z-index: 10;
-            border-radius: 10px;
+            height: 3px;
+            width: 25%;
+            margin: -1.5px auto 0;
+            border-radius: 4px;
         }
 
         /* Información del Cliente */
-        .client-section { padding: 40px 50px 20px 50px; }
+        .client-section { padding: 10px 5px 5px 5px; }
         .grid { width: 100%; border-collapse: collapse; }
         .col { width: 50%; vertical-align: top; }
-        .label { font-size: 9px; font-weight: bold; color: #3d5229; text-transform: uppercase; margin-bottom: 4px; }
-        .value { border-bottom: 1px solid #edf2f7; padding: 6px 0; margin-bottom: 20px; font-size: 12px; color: #2d3748; }
+        .label { font-size: 7.5px; font-weight: bold; color: #3d5229; text-transform: uppercase; margin-bottom: 1px; }
+        .value { border-bottom: 1px solid #edf2f7; padding: 2px 0; margin-bottom: 6px; font-size: 9px; color: #2d3748; }
 
         /* Tabla de Items */
         .items-table {
-            width: calc(100% - 100px);
-            margin: 0 50px;
+            width: 100%;
+            margin: 8px 0;
             border-collapse: collapse;
-            table-layout: fixed; /* Fuerza a respetar los porcentajes de ancho asignados */
+            table-layout: fixed;
         }
-        .items-table th { background-color: #3d5229; color: white; font-size: 10px; text-transform: uppercase; padding: 12px; text-align: center; }
-        .items-table td { border: 1px solid #f1f5f9; padding: 10px; font-size: 11px; }
+        .items-table th { background-color: #3d5229; color: white; font-size: 8.5px; text-transform: uppercase; padding: 5px; text-align: center; }
+        .items-table td { border: 1px solid #e2e8f0; padding: 4px; font-size: 9px; }
+        .col-descripcion { word-wrap: break-word; white-space: pre-line; vertical-align: top; text-align: left; }
 
-        /* Propiedades de ajuste para evitar desbordamiento en la descripción */
-        .col-descripcion {
-            word-wrap: break-word;
-            word-break: break-all;
-            white-space: pre-line;
-            vertical-align: top;
+        /* Estructura de Cierre Balanceada (Lado a Lado) */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .summary-table td { vertical-align: top; }
+
+        /* Cuadro de Condiciones */
+        .validity-box {
+            border: 1px dashed #3d5229;
+            background-color: #fcfdfe;
+            padding: 6px 8px;
+            border-radius: 6px;
+            width: 92%; /* Espaciado de seguridad para no chocar con los totales */
+        }
+        .validity-title {
+            color: #3d5229;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 8px;
+            margin-bottom: 3px;
+        }
+        .editable-conditions-block {
+            width: 100%;
+            font-size: 8px;
+            color: #475569;
+            line-height: 1.3;
+            outline: none;
+            white-space: pre-wrap;
         }
 
         /* Totales */
-        .totals-table { margin-top: 25px; margin-left: auto; width: 35%; margin-right: 50px; border-collapse: collapse; }
-        .totals-table td { padding: 10px; border: 1px solid #f1f5f9; font-size: 12px; }
+        .totals-table { width: 100%; border-collapse: collapse; }
+        .totals-table td { padding: 4px 6px; border: 1px solid #edf2f7; font-size: 9px; }
         .total-row { background-color: #3d5229; color: white; font-weight: bold; }
         .text-right { text-align: right; }
 
-        /* Pie de página */
-        .footer { text-align: center; margin-top: 60px; padding-bottom: 40px; }
-        .signature-line { width: 220px; border-top: 2px solid #3d5229; margin: 0 auto 12px; }
-        .responsable-name { color: #3d5229; font-weight: bold; text-transform: uppercase; font-size: 14px; }
+        /* Pie de página y Firmas */
+        .footer-section {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .footer-section td { vertical-align: bottom; text-align: center; }
+        .signature-container { width: 160px; margin: 0 auto; }
+        .signature-line { border-top: 1px solid #3d5229; margin-bottom: 3px; }
+        .responsable-name { color: #3d5229; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        .responsable-cargo { font-size: 8px; color: #718096; text-transform: uppercase; }
+
+        .company-address {
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 8px;
+            color: #718096;
+        }
+
+        @media print {
+            body { background: white; color: #000; }
+            .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .validity-box { border: 1px dashed #3d5229 !important; background-color: #fcfdfe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-row { background-color: #3d5229 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .items-table th { background-color: #3d5229 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
     </style>
 </head>
 <body>
+
     <div class="header">
         <table class="header-table">
             <tr>
-                <td style="width: 20%;">
+                <td style="width: 25%;">
                     <div class="logo-box">
                         @if(isset($logo) && $logo)
                             <img src="{{ $logo }}" alt="Logo">
                         @else
-                            <h3 style="color: #3d5229; margin: 20px 0;">READY</h3>
+                            <h4 style="color: #3d5229; margin: 3px 0; font-weight: bold; font-size: 10px;">READY</h4>
                         @endif
                     </div>
                 </td>
-
                 <td class="title-td">
-                    <div class="proforma-title">
-                        Proforma de Servicios
-                    </div>
+                    <div class="proforma-title">Proforma de Servicios</div>
                 </td>
-
-                <td style="width: 20%;">
+                <td style="width: 25%;">
                     <div class="info-box">
                         <div class="no-label">PROFORMA NO.</div>
                         <div class="no-number">{{ $nuevoContador }}</div>
@@ -167,7 +209,7 @@
                     <div class="label">RUC / Cédula</div>
                     <div class="value">{{ $ruc ?? 'N/A' }}</div>
                 </td>
-                <td class="col" style="padding-left: 50px;">
+                <td class="col" style="padding-left: 20px;">
                     <div class="label">Contacto</div>
                     <div class="value">{{ $contacto ?? 'N/A' }}</div>
                     <div class="label">Teléfono</div>
@@ -177,7 +219,7 @@
             <tr>
                 <td colspan="2">
                     <div class="label">Dirección del Proyecto</div>
-                    <div class="value">{{ $direccion_proyecto ?? $direccion ?? 'N/A' }}</div>
+                    <div class="value" style="margin-bottom: 2px;">{{ $direccion_proyecto ?? $direccion ?? 'N/A' }}</div>
                 </td>
             </tr>
         </table>
@@ -204,38 +246,79 @@
         </tbody>
     </table>
 
-    <table class="totals-table">
+    <table class="summary-table">
         <tr>
-            <td style="background: #fcfcfc; color: #666; font-weight: bold;">Subtotal</td>
-            <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($subtotal, 2) }}</td>
-        </tr>
-        @if($descuento > 0)
-        <tr>
-            <td style="color: #e63946; font-weight: bold;">Descuento</td>
-            <td class="text-right" style="color: #e63946;">- {{ $moneda_simbolo ?? '$' }} {{ number_format($descuento, 2) }}</td>
-        </tr>
-        @endif
-        @if($iva > 0)
-        <tr>
-            <td style="color: #666;">IVA (15%)</td>
-            <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($iva, 2) }}</td>
-        </tr>
-        @endif
-        <tr class="total-row">
-            <td style="font-size: 12px; letter-spacing: 1px;">TOTAL A PAGAR</td>
-            <td class="text-right" style="font-size: 16px;">{{ $moneda_simbolo ?? '$' }} {{ number_format($total, 2) }}</td>
+            <td style="width: 55%;">
+                <div class="validity-box">
+                    <div class="validity-title">Condiciones:</div>
+                    <div class="editable-conditions-block" id="txtCondiciones" contenteditable="true">@if(!empty($condiciones) && !is_array($condiciones)){!! nl2br(e($condiciones)) !!}@else• Vigencia de la cotización: 30 días calendario.
+• Se requiere el 50% de anticipo para iniciar el proyecto.
+• El 50% restante se cancelará contra entrega del trabajo.
+• Tiempo de entrega estimado: 5 a 7 días hábiles.
+• Precios sujetos a cambios sin previo aviso.@endif</div>
+                </div>
+                <input type="hidden" id="input_condiciones_servidor" name="condiciones" value="">
+            </td>
+
+            <td style="width: 45%;">
+                <table class="totals-table">
+                    <tr>
+                        <td style="background: #fcfcfc; color: #555; font-weight: bold;">Subtotal</td>
+                        <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($subtotal, 2) }}</td>
+                    </tr>
+                    @if($descuento > 0)
+                    <tr>
+                        <td style="color: #e63946; font-weight: bold;">Descuento</td>
+                        <td class="text-right" style="color: #e63946;">- {{ $moneda_simbolo ?? '$' }} {{ number_format($descuento, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if($iva > 0)
+                    <tr>
+                        <td style="color: #555;">IVA (15%)</td>
+                        <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($iva, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr class="total-row">
+                        <td style="letter-spacing: 0.5px; font-size: 9px;">TOTAL A PAGAR</td>
+                        <td class="text-right" style="font-size: 11px;">{{ $moneda_simbolo ?? '$' }} {{ number_format($total, 2) }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 
-    <div class="footer">
-        <div class="signature-line"></div>
-        <div class="responsable-name">{{ $responsable_nombre ?? 'Jammy Silva' }}</div>
-        <div style="font-size: 10px; color: #999; text-transform: uppercase; margin-top: 4px;">
-            {{ $responsable_cargo ?? 'Supervisora - Coordinadora' }}
-        </div>
-        <div style="font-size: 12px; font-weight: bold; margin-top: 10px; color: #333;">
-            TEL: {{ $responsable_tel ?? '8588-5337' }}
-        </div>
+    <table class="footer-section">
+        <tr>
+            <td>
+                <div class="signature-container">
+                    <div class="signature-line"></div>
+                    <div class="responsable-name">{{ $responsable_nombre ?? 'Jammy Silva' }}</div>
+                    <div class="responsable-cargo">{{ $responsable_cargo ?? 'Supervisora - Coordinadora' }}</div>
+                    <div style="font-size: 9px; font-weight: bold; margin-top: 2px; color: #333;">
+                        TEL: {{ $responsable_tel ?? '8588-5337' }}
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="company-address">
+        <strong>Dirección Oficina Central:</strong> Camino viejo a Santo Domingo. Del AMPM 30m al sur, 300m al oeste. Managua, Nicaragua.
     </div>
+
+    <script>
+        const contenedorEditable = document.getElementById('txtCondiciones');
+        const inputServidor = document.getElementById('input_condiciones_servidor');
+
+        if(contenedorEditable && inputServidor) {
+            inputServidor.value = contenedorEditable.innerText.trim();
+            contenedorEditable.addEventListener('input', function() {
+                inputServidor.value = this.innerText;
+            });
+        }
+        <script>
+
+</script>
+    </script>
 </body>
 </html>

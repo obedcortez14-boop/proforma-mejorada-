@@ -46,8 +46,10 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
 </head>
 <body>
 
-    <form action="{{ route('pdf.generar') }}" method="POST" class="w-full flex flex-col items-center">
+    <form id="formCotizador" action="{{ route('pdf.generar') }}" method="POST" class="w-full flex flex-col items-center">
         @csrf
+
+        <input type="hidden" id="input_condiciones_servidor" name="condiciones" value="">
 
         <div class="no-print w-full max-w-[1000px] mb-6 flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div class="flex items-center gap-6">
@@ -66,7 +68,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                     <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337">Jammy Silva</option>
                     <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648">Maura Benavides</option>
                     <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892">Stephany Mejia</option>
-                    <option value="Josep Hernadez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510">Josep Hernadez</option>
+                    <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510">Josep Hernandez</option>
                 </select>
             </div>
         </div>
@@ -87,7 +89,8 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
             </div>
 
             <div class="bg-red-600 h-1.5 w-40 mx-auto -mt-0.5 relative z-20 rounded-full shadow-lg"></div>
-<div class="p-12 grid grid-cols-2 gap-x-16 gap-y-8 text-sm">
+
+            <div class="p-12 grid grid-cols-2 gap-x-16 gap-y-8 text-sm">
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Cliente</label>
                     <input type="text" name="cliente" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
@@ -124,7 +127,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                     <tbody id="tabla-cuerpo">
                         <tr>
                             <td class="p-0 cell-height">
-                                <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed" placeholder="Detalles del servicio..."></textarea>
+                                <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
                             </td>
                             <td class="align-middle text-center bg-gray-50/30">
                                 <input type="number" name="items[0][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
@@ -135,7 +138,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                                     <input type="number" name="items[0][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
                                 </div>
                             </td>
-                            <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0.00</td>
+                            <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
                             <td class="align-middle text-center no-print">
                                 <button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
                             </td>
@@ -144,17 +147,29 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                     <tfoot>
                         <tr class="text-xs">
                             <td colspan="2" rowspan="4" class="p-8 align-top bg-white">
-                                <div class="border border-dashed border-gray-200 p-5 rounded-2xl bg-gray-50/50">
-                                    <h4 class="font-extrabold text-[#3d5229] uppercase mb-2 text-[10px] tracking-tighter">Condiciones:</h4>
-                                    <ul class="text-[10px] text-gray-500 space-y-1 list-disc ml-4">
-                                        <li>Vigencia: 30 días.</li>
-                                        <li>Se requiere el 50% de anticipo.</li>
+                                <div contenteditable="true"
+                                     id="txtCondiciones"
+                                     class="border border-dashed border-gray-300 p-6 rounded-2xl bg-gray-50/40
+                                            focus:outline-none focus:border-[#3d5229] focus:bg-white focus:ring-4 focus:ring-[#3d5229]/5
+                                            transition-all duration-200 group cursor-text"
+                                     title="Haz clic en cualquier lugar de este recuadro para editarlo">
+
+                                    <h4 class="font-black text-[#3d5229] uppercase mb-3 text-[11px] tracking-wider select-none group-focus:text-[#4d6635]">
+                                        Condiciones:
+                                    </h4>
+
+                                    <ul class="text-[10px] text-gray-600 space-y-2 list-disc ml-5 marker:text-[#3d5229]/70">
+                                        <li>Vigencia de la cotización: 30 días calendario.</li>
+                                        <li>Se requiere el 50% de anticipo para iniciar el proyecto.</li>
+                                        <li>El 50% restante se cancelará contra entrega del trabajo.</li>
+                                        <li>Tiempo de entrega estimado: 5 a 7 días hábiles.</li>
+                                        <li>Precios sujetos a cambios sin previo aviso.</li>
                                     </ul>
                                 </div>
                             </td>
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px] bg-gray-50">Subtotal</td>
                             <td class="p-5 text-right font-black text-gray-800 pr-10 bg-gray-50">
-                                <span class="symbol-res">$</span> <span id="txt-subtotal">0.00</span>
+                                <span class="symbol-res">$</span> <span id="txt-subtotal">0</span>
                                 <input type="hidden" name="subtotal_val" id="val-subtotal">
                             </td>
                         </tr>
@@ -188,7 +203,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                                 </div>
                                 <div id="container-monto" class="hidden-discount flex items-center justify-end">
                                     <span class="symbol-res text-red-600 font-bold">$</span>
-                                    <input type="number" id="input-monto-desc" name="descuento_val" class="input-totales w-24 text-red-600" value="0.00" step="0.01" oninput="calcularDesdeMonto()">
+                                    <input type="number" id="input-monto-desc" name="descuento_val" class="input-totales w-24 text-red-600" value="0" step="1" oninput="calcularDesdeMonto()">
                                 </div>
                             </td>
                         </tr>
@@ -196,7 +211,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                         <tr class="text-xs">
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px]">IVA (15%)</td>
                             <td class="p-5 text-right font-bold text-gray-500 pr-10 italic">
-                                <span class="symbol-res">$</span> <span id="txt-iva">0.00</span>
+                                <span class="symbol-res">$</span> <span id="txt-iva">0</span>
                                 <input type="hidden" name="iva_val" id="val-iva">
                             </td>
                         </tr>
@@ -207,7 +222,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                                     <span class="font-bold uppercase tracking-[0.4em] text-xs opacity-80">Total a Pagar</span>
                                     <div class="flex items-baseline gap-2 border-l border-white/20 pl-8">
                                         <span class="symbol-res text-xl font-light opacity-70">$</span>
-                                        <span id="txt-total" class="font-black text-4xl italic tracking-tighter">0.00</span>
+                                        <span id="txt-total" class="font-black text-4xl italic tracking-tighter">0</span>
                                     </div>
                                 </div>
                                 <input type="hidden" name="total_val" id="val-total">
@@ -237,6 +252,40 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
     <script>
         let contadorFila = 1;
 
+        document.addEventListener("DOMContentLoaded", function() {
+            const miFormulario = document.getElementById('formCotizador');
+            const cajaEditable = document.getElementById('txtCondiciones');
+            const inputOculto = document.getElementById('input_condiciones_servidor');
+
+            if (miFormulario && cajaEditable && inputOculto) {
+                miFormulario.addEventListener('submit', function(e) {
+                    const elementosLista = cajaEditable.querySelectorAll('ul li');
+                    let textoFinal = "";
+
+                    if (elementosLista.length > 0) {
+                        let lineas = [];
+                        elementosLista.forEach(function(li) {
+                            let textoLinea = li.innerText.trim();
+                            if (textoLinea !== "") {
+                                if (!textoLinea.startsWith('•')) {
+                                    textoLinea = "• " + textoLinea;
+                                }
+                                lineas.push(textoLinea);
+                            }
+                        });
+                        textoFinal = lineas.join("\n");
+                    } else {
+                        const clon = cajaEditable.cloneNode(true);
+                        const tituloH4 = clon.querySelector('h4');
+                        if (tituloH4) tituloH4.remove();
+                        textoFinal = clon.innerText.trim();
+                    }
+
+                    inputOculto.value = textoFinal;
+                });
+            }
+        });
+
         function actualizarFirma() {
             const select = document.getElementById('selector-usuario');
             const option = select.options[select.selectedIndex];
@@ -260,7 +309,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                         <input type="number" name="items[${contadorFila}][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
                     </div>
                 </td>
-                <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">${simbolo} 0.00</td>
+                <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">${simbolo} 0</td>
                 <td class="align-middle text-center no-print"><button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button></td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
@@ -295,7 +344,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
         function calcularDesdePorcentaje() {
             const subtotal = parseFloat(document.getElementById('val-subtotal').value) || 0;
             const porcentaje = parseFloat(document.getElementById('input-porcentaje-desc').value) || 0;
-            document.getElementById('input-monto-desc').value = (subtotal * (porcentaje / 100)).toFixed(2);
+            document.getElementById('input-monto-desc').value = Math.round(subtotal * (porcentaje / 100));
             calcular();
         }
 
@@ -316,23 +365,27 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
             document.querySelectorAll('#tabla-cuerpo tr').forEach(row => {
                 const q = parseFloat(row.querySelector('.qty').value) || 0;
                 const p = parseFloat(row.querySelector('.price').value) || 0;
-                const sub = q * p;
+                const sub = Math.round(q * p);
                 totalBruto += sub;
-                row.querySelector('.subtotal-fila').innerText = simbolo + ' ' + sub.toLocaleString('en-US', {minimumFractionDigits: 2});
+                row.querySelector('.subtotal-fila').innerText = simbolo + ' ' + sub.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             });
 
+            totalBruto = Math.round(totalBruto);
             document.getElementById('val-subtotal').value = totalBruto;
-            document.getElementById('txt-subtotal').innerText = totalBruto.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('txt-subtotal').innerText = totalBruto.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 
-            const mntDesc = parseFloat(document.getElementById('input-monto-desc').value) || 0;
+            const mntDesc = Math.round(parseFloat(document.getElementById('input-monto-desc').value) || 0);
             const aplicaIva = document.getElementById('switch-iva').checked;
             const baseImponible = Math.max(0, totalBruto - mntDesc);
-            const mntIva = aplicaIva ? (baseImponible * 0.15) : 0;
-            const granTotal = baseImponible + mntIva;
 
-            document.getElementById('txt-iva').innerText = mntIva.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('txt-total').innerText = granTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('val-iva').value = mntIva;
+            const mntIvaExacto = aplicaIva ? (baseImponible * 0.15) : 0;
+            const mntIvaMostrar = Math.round(mntIvaExacto);
+            const granTotal = Math.round(baseImponible + mntIvaExacto);
+
+            document.getElementById('txt-iva').innerText = mntIvaMostrar.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('txt-total').innerText = granTotal.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+            document.getElementById('val-iva').value = mntIvaMostrar;
             document.getElementById('val-total').value = granTotal;
         }
 
