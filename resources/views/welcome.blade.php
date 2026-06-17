@@ -16,7 +16,8 @@ if (is_array($contadorFirebase)) {
 } else {
     $valorContador = ($contadorFirebase !== null) ? $contadorFirebase : 1;
 }
-$nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
+// Si estamos editando, usamos el código que ya tiene la proforma en SQL Server
+$nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $proforma->codigo_proforma : str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -26,7 +27,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
     <title>Proforma Ready - Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #f1f5f9; padding: 20px; }
         .proforma-container { width: 100%; max-width: 1000px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 24px; overflow: hidden; border: 1px solid rgba(226, 232, 240, 0.8); }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
@@ -46,8 +47,11 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
 </head>
 <body>
 
-    <form id="formCotizador" action="{{ route('pdf.generar') }}" method="POST" class="w-full flex flex-col items-center">
+    <form id="formCotizador" action="{{ isset($proforma) && isset($proforma->id) ? route('proformas.update', $proforma->id) : route('pdf.generar') }}" method="POST" class="w-full flex flex-col items-center">
         @csrf
+        @if(isset($proforma))
+            @method('PUT')
+        @endif
 
         <input type="hidden" id="input_condiciones_servidor" name="condiciones" value="">
 
@@ -56,19 +60,22 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                 <div class="flex items-center gap-2">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Moneda</label>
                     <select id="selector-moneda" name="moneda_simbolo" onchange="calcular()" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-2.5 font-bold outline-none">
-                        <option value="$">Dólares ($)</option>
-                        <option value="C$">Córdobas (C$)</option>
+                        <option value="$" {{ isset($proforma) && isset($proforma->moneda) && $proforma->moneda == '$' ? 'selected' : '' }}>Dólares ($)</option>
+                        <option value="C$" {{ isset($proforma) && isset($proforma->moneda) && $proforma->moneda == 'C$' ? 'selected' : '' }}>Córdobas (C$)</option>
                     </select>
+                </div>
+                <div>
+                    <a href="{{ route('proformas.index') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-all">📋 Ver Historial</a>
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Responsable</label>
                 <select id="selector-usuario" name="responsable_nombre" onchange="actualizarFirma()" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-2.5 font-bold outline-none">
-                    <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337">Jammy Silva</option>
-                    <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648">Maura Benavides</option>
-                    <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892">Stephany Mejia</option>
-                    <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510">Josep Hernandez</option>
+                    <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Jammy Silva' ? 'selected' : '' }}>Jammy Silva</option>
+                    <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Maura Benavides' ? 'selected' : '' }}>Maura Benavides</option>
+                    <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Stephany Mejia' ? 'selected' : '' }}>Stephany Mejia</option>
+                    <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Josep Hernandez' ? 'selected' : '' }}>Josep Hernandez</option>
                 </select>
             </div>
         </div>
@@ -79,12 +86,14 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                     <img src="{{ asset('imagen/LOGO JPG.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
                 </div>
                 <div class="text-center z-10">
-                    <h1 class="text-xl font-extrabold uppercase tracking-[0.3em] border-y border-white/10 py-3">Proforma de Servicios</h1>
+                    <h1 class="text-xl font-extrabold uppercase tracking-[0.3em] border-y border-white/10 py-3">
+                        {{ isset($proforma) ? 'Editar Proforma realizada' : 'Proforma de Servicios' }}
+                    </h1>
                 </div>
                 <div class="bg-white/10 backdrop-blur-md text-white p-4 rounded-2xl border border-white/20 text-center min-w-[160px] z-10">
                     <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">No. <span class="text-white text-lg font-black block mt-1"><?php echo $nuevoContador; ?></span></p>
                     <input type="hidden" name="numero_proforma" value="<?php echo $nuevoContador; ?>">
-                    <p class="text-[9px] font-bold border-t border-white/20 pt-2 mt-1">FECHA: <?php echo date('d/m/Y'); ?></p>
+                    <p class="text-[9px] font-bold border-t border-white/20 pt-2 mt-1">FECHA: {{ isset($proforma) && isset($proforma->fecha_emision) ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('d/m/Y') : date('d/m/Y') }}</p>
                 </div>
             </div>
 
@@ -93,23 +102,23 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
             <div class="p-12 grid grid-cols-2 gap-x-16 gap-y-8 text-sm">
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Cliente</label>
-                    <input type="text" name="cliente" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                    <input type="text" name="cliente" value="{{ isset($proforma) ? $proforma->cliente : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Contacto</label>
-                    <input type="text" name="contacto" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                    <input type="text" name="contacto" value="{{ isset($proforma) ? $proforma->observaciones : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">RUC / Cédula</label>
-                    <input type="text" name="ruc" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                    <input type="text" name="ruc" value="{{ isset($proforma) ? $proforma->ruc_cedula : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Teléfono</label>
-                    <input type="text" name="telefono" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                    <input type="text" name="telefono" value="{{ isset($proforma) ? $proforma->telefono : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Dirección del proyecto</label>
-                    <input type="text" name="direccion_proyecto" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                    <input type="text" name="direccion_proyecto" value="{{ isset($proforma) ? $proforma->direccion_proyecto : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
             </div>
 
@@ -125,33 +134,54 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                         </tr>
                     </thead>
                     <tbody id="tabla-cuerpo">
-                        <tr>
-                            <td class="p-0 cell-height">
-                                <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
-                            </td>
-                            <td class="align-middle text-center bg-gray-50/30">
-                                <input type="number" name="items[0][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
-                            </td>
-                            <td class="align-middle text-center">
-                                <div class="flex items-center justify-center gap-1">
-                                    <span class="symbol font-bold text-gray-400">$</span>
-                                    <input type="number" name="items[0][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
-                                </div>
-                            </td>
-                            <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
-                            <td class="align-middle text-center no-print">
-                                <button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
-                            </td>
-                        </tr>
+                        @if(isset($proforma) && isset($proforma->detalles) && $proforma->detalles->count() > 0)
+                            @foreach($proforma->detalles as $index => $detalle)
+                            <tr>
+                                <td class="p-0 cell-height">
+                                    <textarea name="items[{{ $index }}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none">{{ $detalle->descripcion }}</textarea>
+                                </td>
+                                <td class="align-middle text-center bg-gray-50/30">
+                                    <input type="number" name="items[{{ $index }}][cant]" value="{{ $detalle->cantidad }}" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
+                                </td>
+                                <td class="align-middle text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <span class="symbol font-bold text-gray-400">$</span>
+                                        <input type="number" name="items[{{ $index }}][precio]" value="{{ $detalle->precio_unitario }}" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
+                                <td class="align-middle text-center no-print">
+                                    <button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
+                                </td>
+                            </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td class="p-0 cell-height">
+                                    <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
+                                </td>
+                                <td class="align-middle text-center bg-gray-50/30">
+                                    <input type="number" name="items[0][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
+                                </td>
+                                <td class="align-middle text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <span class="symbol font-bold text-gray-400">$</span>
+                                        <input type="number" name="items[0][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                                    </div>
+                                </td>
+                                <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
+                                <td class="align-middle text-center no-print">
+                                    <button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                     <tfoot>
                         <tr class="text-xs">
                             <td colspan="2" rowspan="4" class="p-8 align-top bg-white">
                                 <div contenteditable="true"
                                      id="txtCondiciones"
-                                     class="border border-dashed border-gray-300 p-6 rounded-2xl bg-gray-50/40
-                                            focus:outline-none focus:border-[#3d5229] focus:bg-white focus:ring-4 focus:ring-[#3d5229]/5
-                                            transition-all duration-200 group cursor-text"
+                                     class="border border-dashed border-gray-300 p-6 rounded-2xl bg-gray-50/40 focus:outline-none focus:border-[#3d5229] focus:bg-white focus:ring-4 focus:ring-[#3d5229]/5 transition-all duration-200 group cursor-text"
                                      title="Haz clic en cualquier lugar de este recuadro para editarlo">
 
                                     <h4 class="font-black text-[#3d5229] uppercase mb-3 text-[11px] tracking-wider select-none group-focus:text-[#4d6635]">
@@ -170,7 +200,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px] bg-gray-50">Subtotal</td>
                             <td class="p-5 text-right font-black text-gray-800 pr-10 bg-gray-50">
                                 <span class="symbol-res">$</span> <span id="txt-subtotal">0</span>
-                                <input type="hidden" name="subtotal_val" id="val-subtotal">
+                                <input type="hidden" name="subtotal_val" id="val-subtotal" value="0">
                             </td>
                         </tr>
 
@@ -182,7 +212,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                                         <span class="text-[9px] font-bold text-blue-600 uppercase">¿Descuento?</span>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <label class="switch"><input type="checkbox" id="switch-iva" onchange="calcular()"><span class="slider"></span></label>
+                                        <label class="switch"><input type="checkbox" id="switch-iva" onchange="calcular()" {{ isset($proforma) && isset($proforma->impuesto) && $proforma->impuesto > 0 ? 'checked' : '' }}><span class="slider"></span></label>
                                         <span class="text-[9px] font-bold text-gray-500 uppercase">IVA (15%)</span>
                                     </div>
                                 </div>
@@ -212,7 +242,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px]">IVA (15%)</td>
                             <td class="p-5 text-right font-bold text-gray-500 pr-10 italic">
                                 <span class="symbol-res">$</span> <span id="txt-iva">0</span>
-                                <input type="hidden" name="iva_val" id="val-iva">
+                                <input type="hidden" name="iva_val" id="val-iva" value="0">
                             </td>
                         </tr>
 
@@ -225,10 +255,10 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
                                         <span id="txt-total" class="font-black text-4xl italic tracking-tighter">0</span>
                                     </div>
                                 </div>
-                                <input type="hidden" name="total_val" id="val-total">
+                                <input type="hidden" name="total_val" id="val-total" value="0">
                             </td>
                         </tr>
-                    </tfoot>
+                    </tbody>
                 </table>
             </div>
 
@@ -245,49 +275,59 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
 
         <div class="no-print flex gap-6 mt-12 mb-20">
             <button type="button" onclick="agregarFila()" class="bg-white border-2 border-[#3d5229] text-[#3d5229] px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3d5229] hover:text-white transition-all shadow-lg">➕ Agregar Servicio</button>
-            <button type="submit" class="bg-[#3d5229] text-white px-10 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#2c3d1f] transition-all shadow-2xl">🖨️ Generar PDF</button>
+
+            <button type="submit" class="bg-[#3d5229] text-white px-10 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#2c3d1f] transition-all shadow-2xl">
+                {{ isset($proforma) ? '💾 Guardar Cambios y PDF' : '🖨️ Generar PDF' }}
+            </button>
         </div>
     </form>
 
     <script>
-        let contadorFila = 1;
+        let contadorFila = document.querySelectorAll('#tabla-cuerpo tr').length;
 
         document.addEventListener("DOMContentLoaded", function() {
             const miFormulario = document.getElementById('formCotizador');
-            const cajaEditable = document.getElementById('txtCondiciones');
-            const inputOculto = document.getElementById('input_condiciones_servidor');
 
-            if (miFormulario && cajaEditable && inputOculto) {
+            if (miFormulario) {
                 miFormulario.addEventListener('submit', function(e) {
-                    const elementosLista = cajaEditable.querySelectorAll('ul li');
-                    let textoFinal = "";
+                    const cajaEditable = document.getElementById('txtCondiciones');
+                    const inputOculto = document.getElementById('input_condiciones_servidor');
 
-                    if (elementosLista.length > 0) {
-                        let lineas = [];
-                        elementosLista.forEach(function(li) {
-                            let textoLinea = li.innerText.trim();
-                            if (textoLinea !== "") {
-                                if (!textoLinea.startsWith('•')) {
-                                    textoLinea = "• " + textoLinea;
+                    if (cajaEditable && inputOculto) {
+                        const elementosLista = cajaEditable.querySelectorAll('ul li');
+                        let textoFinal = "";
+
+                        if (elementosLista.length > 0) {
+                            let lineas = [];
+                            elementosLista.forEach(function(li) {
+                                let textoLinea = li.innerText.trim();
+                                if (textoLinea !== "") {
+                                    if (!textoLinea.startsWith('•')) {
+                                        textoLinea = "• " + textoLinea;
+                                    }
+                                    lineas.push(textoLinea);
                                 }
-                                lineas.push(textoLinea);
-                            }
-                        });
-                        textoFinal = lineas.join("\n");
-                    } else {
-                        const clon = cajaEditable.cloneNode(true);
-                        const tituloH4 = clon.querySelector('h4');
-                        if (tituloH4) tituloH4.remove();
-                        textoFinal = clon.innerText.trim();
+                            });
+                            textoFinal = lineas.join("\n");
+                        } else {
+                            const clon = cajaEditable.cloneNode(true);
+                            const tituloH4 = clon.querySelector('h4');
+                            if (tituloH4) tituloH4.remove();
+                            textoFinal = clon.innerText.trim();
+                        }
+                        inputOculto.value = textoFinal;
                     }
-
-                    inputOculto.value = textoFinal;
+                    calcular();
                 });
             }
+
+            actualizarFirma();
+            calcular();
         });
 
         function actualizarFirma() {
             const select = document.getElementById('selector-usuario');
+            if(!select) return;
             const option = select.options[select.selectedIndex];
             document.getElementById('firma-nombre').innerText = option.value;
             document.getElementById('firma-cargo').innerText = option.getAttribute('data-cargo');
@@ -300,6 +340,7 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
         function agregarFila() {
             const tbody = document.getElementById('tabla-cuerpo');
             const simbolo = document.getElementById('selector-moneda').value;
+
             const row = `<tr>
                 <td class="p-0 cell-height"><textarea name="items[${contadorFila}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] border-none" placeholder="Descripción..."></textarea></td>
                 <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[${contadorFila}][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
@@ -318,7 +359,9 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
         }
 
         function eliminarFila(btn) {
-            if(document.querySelectorAll('#tabla-cuerpo tr').length > 1) btn.closest('tr').remove();
+            if(document.querySelectorAll('#tabla-cuerpo tr').length > 1) {
+                btn.closest('tr').remove();
+            }
             calcular();
         }
 
@@ -356,15 +399,21 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
         }
 
         function calcular() {
-            const simbolo = document.getElementById('selector-moneda').value;
+            const selector = document.getElementById('selector-moneda');
+            if(!selector) return;
+            const simbolo = selector.value;
             let totalBruto = 0;
 
             document.querySelectorAll('.symbol').forEach(s => s.innerText = simbolo);
             document.querySelectorAll('.symbol-res').forEach(s => s.innerText = simbolo);
 
             document.querySelectorAll('#tabla-cuerpo tr').forEach(row => {
-                const q = parseFloat(row.querySelector('.qty').value) || 0;
-                const p = parseFloat(row.querySelector('.price').value) || 0;
+                const qtyInput = row.querySelector('.qty');
+                const priceInput = row.querySelector('.price');
+                if(!qtyInput || !priceInput) return;
+
+                const q = parseFloat(qtyInput.value) || 0;
+                const p = parseFloat(priceInput.value) || 0;
                 const sub = Math.round(q * p);
                 totalBruto += sub;
                 row.querySelector('.subtotal-fila').innerText = simbolo + ' ' + sub.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
@@ -388,9 +437,6 @@ $nuevoContador = str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
             document.getElementById('val-iva').value = mntIvaMostrar;
             document.getElementById('val-total').value = granTotal;
         }
-
-        actualizarFirma();
-        calcular();
     </script>
 </body>
 </html>
