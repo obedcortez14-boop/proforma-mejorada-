@@ -116,7 +116,7 @@
             background-color: #fcfdfe;
             padding: 6px 8px;
             border-radius: 6px;
-            width: 92%; /* Espaciado de seguridad para no chocar con los totales */
+            width: 92%;
         }
         .validity-title {
             color: #3d5229;
@@ -176,13 +176,17 @@
         <table class="header-table">
             <tr>
                 <td style="width: 25%;">
-                    <div class="logo-box">
-                        @if(isset($logo) && $logo)
-                            <img src="{{ $logo }}" alt="Logo">
-                        @else
-                            <h4 style="color: #3d5229; margin: 3px 0; font-weight: bold; font-size: 10px;">READY</h4>
-                        @endif
-                    </div>
+                   <div class="logo-box">
+    @if(!empty($logo))
+        <img src="{{ $logo }}" alt="Logo" style="max-width: 150px; height: auto;">
+    @elseif(file_exists(public_path('imagen/LOGO JPG.jpg')))
+        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('imagen/LOGO JPG.jpg'))) }}" alt="Logo">
+    @elseif(file_exists(public_path('logo.jpg')))
+        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" alt="Logo">
+    @else
+        <h4 style="color: #3d5229; margin: 3px 0; font-weight: bold; font-size: 10px;">READY</h4>
+    @endif
+</div>
                 </td>
                 <td class="title-td">
                     <div class="proforma-title">Proforma de Servicios</div>
@@ -251,13 +255,18 @@
             <td style="width: 55%;">
                 <div class="validity-box">
                     <div class="validity-title">Condiciones:</div>
-                    <div class="editable-conditions-block" id="txtCondiciones" contenteditable="true">@if(!empty($condiciones) && !is_array($condiciones)){!! nl2br(e($condiciones)) !!}@else• Vigencia de la cotización: 30 días calendario.
-• Se requiere el 50% de anticipo para iniciar el proyecto.
-• El 50% restante se cancelará contra entrega del trabajo.
-• Tiempo de entrega estimado: 5 a 7 días hábiles.
-• Precios sujetos a cambios sin previo aviso.@endif</div>
+                    <div class="editable-conditions-block" id="txtCondiciones">
+                        @if(!empty($condiciones) && !is_array($condiciones))
+                            {!! nl2br(e($condiciones)) !!}
+                        @else
+                            • Vigencia de la cotización: 30 días calendario.<br>
+                            • Se requiere el 50% de anticipo para iniciar el proyecto.<br>
+                            • El 50% restante se cancelará contra entrega del trabajo.<br>
+                            • Tiempo de entrega estimado: 5 a 7 días hábiles.<br>
+                            • Precios sujetos a cambios sin previo aviso.
+                        @endif
+                    </div>
                 </div>
-                <input type="hidden" id="input_condiciones_servidor" name="condiciones" value="">
             </td>
 
             <td style="width: 45%;">
@@ -266,13 +275,13 @@
                         <td style="background: #fcfcfc; color: #555; font-weight: bold;">Subtotal</td>
                         <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($subtotal, 2) }}</td>
                     </tr>
-                    @if($descuento > 0)
+                    @if(isset($descuento) && $descuento > 0)
                     <tr>
                         <td style="color: #e63946; font-weight: bold;">Descuento</td>
                         <td class="text-right" style="color: #e63946;">- {{ $moneda_simbolo ?? '$' }} {{ number_format($descuento, 2) }}</td>
                     </tr>
                     @endif
-                    @if($iva > 0)
+                    @if(isset($iva) && $iva > 0)
                     <tr>
                         <td style="color: #555;">IVA (15%)</td>
                         <td class="text-right">{{ $moneda_simbolo ?? '$' }} {{ number_format($iva, 2) }}</td>
@@ -306,19 +315,5 @@
         <strong>Dirección Oficina Central:</strong> Camino viejo a Santo Domingo. Del AMPM 30m al sur, 300m al oeste. Managua, Nicaragua.
     </div>
 
-    <script>
-        const contenedorEditable = document.getElementById('txtCondiciones');
-        const inputServidor = document.getElementById('input_condiciones_servidor');
-
-        if(contenedorEditable && inputServidor) {
-            inputServidor.value = contenedorEditable.innerText.trim();
-            contenedorEditable.addEventListener('input', function() {
-                inputServidor.value = this.innerText;
-            });
-        }
-        <script>
-
-</script>
-    </script>
 </body>
 </html>

@@ -27,7 +27,6 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
     <title>Proforma Ready - Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Eliminado @import de Google Fonts que causaba el bloqueo */
         body { font-family: 'Helvetica', 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #f1f5f9; padding: 20px; }
         .proforma-container { width: 100%; max-width: 1000px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 24px; overflow: hidden; border: 1px solid rgba(226, 232, 240, 0.8); }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
@@ -83,7 +82,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         <div class="proforma-container">
             <div class="bg-[#3d5229] p-8 flex justify-between items-center text-white relative">
                 <div class="z-10 bg-white p-3 rounded-2xl shadow-lg flex items-center justify-center min-w-[140px]">
-                    <img src="{{ asset('imagen/logo.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
+                    <img src="{{ asset('imagen/LOGO JPG.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
                 </div>
                 <div class="text-center z-10">
                     <h1 class="text-xl font-extrabold uppercase tracking-[0.3em] border-y border-white/10 py-3">

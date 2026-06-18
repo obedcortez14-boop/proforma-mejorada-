@@ -245,14 +245,17 @@ class CalculadoraController extends Controller
             'responsable_cargo'  => $cargo,
             'responsable_tel'    => $tel,
             'fecha'              => $fechaFormateada,
-            'condiciones'        => $request->input('condiciones')
+            'condiciones'        => $request->input('condiciones'),
         ];
 
-        $pdf = Pdf::loadView('factura', $data);
-        $pdf->setPaper('A4', 'portrait');
+       $pdf = Pdf::loadView('factura', $data)
+                  ->setPaper('A4', 'portrait')
+                  ->setOptions([
+                      'isRemoteEnabled' => true,
+                      'isHtml5ParserEnabled' => true
+                  ]);
 
         $nombreArchivo = 'Prof-ready-' . $nuevoContador . '.pdf';
-        $pdf->setOption(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
         return $pdf->download($nombreArchivo);
     }
 }
