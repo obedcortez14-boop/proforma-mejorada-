@@ -203,10 +203,16 @@ class CalculadoraController extends Controller
     {
         $logo = null;
         $logoPath = public_path('imagen/LOGO JPG.jpg');
-        if (file_exists($logoPath)) {
-            $extension = pathinfo($logoPath, PATHINFO_EXTENSION);
-            $logoData = base64_encode(file_get_contents($logoPath));
-            $logo = 'data:image/' . $extension . ';base64,' . $logoData;
+
+        // 🛠️ MEJORA DE ESTABILIDAD: Si el archivo existe, lo leemos de manera segura controlando excepciones
+        if (file_exists($logoPath) && is_readable($logoPath)) {
+            try {
+                $extension = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $logoData = base64_encode(file_get_contents($logoPath));
+                $logo = 'data:image/' . $extension . ';base64,' . $logoData;
+            } catch (Exception $ex) {
+                $logo = null; // Previene que se cuelgue la descarga si falla el buffer de lectura
+            }
         }
 
         $responsableNombre = $request->input('responsable_nombre') ?? $request->input('pdf_firma_nombre');
@@ -248,14 +254,21 @@ class CalculadoraController extends Controller
             'condiciones'        => $request->input('condiciones'),
         ];
 
-       $pdf = Pdf::loadView('factura', $data)
-                  ->setPaper('A4', 'portrait')
+        $pdf = Pdf::loadView('factura', $data)
+                  ->setPaper('letter', 'portrait') // Cambiado a 'letter' para coincidir perfectamente con tu CSS @page
                   ->setOptions([
                       'isRemoteEnabled' => true,
                       'isHtml5ParserEnabled' => true
                   ]);
 
         $nombreArchivo = 'Prof-ready-' . $nuevoContador . '.pdf';
-        return $pdf->download($nombreArchivo);
+
+        // ⚡ CORRECCIÓN CLAVE: Agregamos las cabeceras HTTP explícitas de descarga para obligar al navegador a procesarlo como archivo binario.
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
+            'Cache-Control' => 'no-cache, private',
+            'Pragma' => 'no-cache'
+        ]);
     }
 }
