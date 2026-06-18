@@ -261,8 +261,8 @@
                         @else
                             • Vigencia de la cotización: 30 días calendario.<br>
                             • Se requiere el 50% de anticipo para iniciar el proyecto.<br>
-                            • El 50% restante se cancelará contra entrega del trabajo.<br>
-                            • Tiempo de entrega estimado: 5 a 7 días hábiles.<br>
+                            • El 50% restante se cancelará contra entrega de los baldes.<br>
+                            • Tiempo de entrega estimado: 3 a 5 días hábiles.<br>
                             • Precios sujetos a cambios sin previo aviso.
                         @endif
                     </div>

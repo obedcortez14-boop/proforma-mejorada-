@@ -82,7 +82,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         <div class="proforma-container">
             <div class="bg-[#3d5229] p-8 flex justify-between items-center text-white relative">
                 <div class="z-10 bg-white p-3 rounded-2xl shadow-lg flex items-center justify-center min-w-[140px]">
-                    <img src="{{ asset('imagen/LOGO JPG.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
+                    <img src="{{ asset('imagen/logo.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
                 </div>
                 <div class="text-center z-10">
                     <h1 class="text-xl font-extrabold uppercase tracking-[0.3em] border-y border-white/10 py-3">
@@ -232,8 +232,9 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                 </div>
                                 <div id="container-monto" class="hidden-discount flex items-center justify-end">
                                     <span class="symbol-res text-red-600 font-bold">$</span>
-                                    <input type="number" id="input-monto-desc" name="descuento_val" class="input-totales w-24 text-red-600" value="0" step="1" oninput="calcularDesdeMonto()">
+                                    <input type="number" id="input-monto-desc" class="input-totales w-24 text-red-600" value="0" step="1" oninput="calcularDesdeMonto()">
                                 </div>
+                                <input type="hidden" name="descuento_val" id="val-descuento" value="0">
                             </td>
                         </tr>
 
@@ -370,6 +371,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             if(!activo) {
                 filaDesc.classList.add('hidden-discount');
                 document.getElementById('input-monto-desc').value = 0;
+                document.getElementById('input-porcentaje-desc').value = 0;
             } else {
                 filaDesc.classList.remove('hidden-discount');
             }
@@ -423,6 +425,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.getElementById('txt-subtotal').innerText = totalBruto.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 
             const mntDesc = Math.round(parseFloat(document.getElementById('input-monto-desc').value) || 0);
+            document.getElementById('val-descuento').value = mntDesc;
+
             const aplicaIva = document.getElementById('switch-iva').checked;
             const baseImponible = Math.max(0, totalBruto - mntDesc);
 
