@@ -112,10 +112,12 @@ class CalculadoraController extends Controller
             $fechaEmisionFinal = $proforma->fecha_emision;
             return $this->descargarPdfMapeado($request, $nuevoContador, $fechaEmisionFinal);
 
-        } catch (Exception $e) {
-            DB::rollBack();
-            return back()->withErrors('Error crítico al crear: ' . $e->getMessage())->withInput();
-        }
+       } catch (Exception $e) {
+    DB::rollBack();
+
+    // 🛠️ ESTO DETENDRÁ LA APP Y TE MOSTRARÁ EL ERROR REAL EN PANTALLA:
+    dd($e->getMessage(), $e->getTraceAsString());
+}
     }
 
     // =====================================================
