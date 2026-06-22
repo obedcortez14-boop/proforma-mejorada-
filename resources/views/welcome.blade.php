@@ -16,6 +16,7 @@ if (is_array($contadorFirebase)) {
 } else {
     $valorContador = ($contadorFirebase !== null) ? $contadorFirebase : 1;
 }
+
 // Si estamos editando, usamos el código que ya tiene la proforma en SQL Server
 $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $proforma->codigo_proforma : str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
 ?>
@@ -59,8 +60,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                 <div class="flex items-center gap-2">
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Moneda</label>
                     <select id="selector-moneda" name="moneda_simbolo" onchange="calcular()" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-2.5 font-bold outline-none">
-                        <option value="$" {{ isset($proforma) && isset($proforma->moneda) && $proforma->moneda == '$' ? 'selected' : '' }}>Dólares ($)</option>
-                        <option value="C$" {{ isset($proforma) && isset($proforma->moneda) && $proforma->moneda == 'C$' ? 'selected' : '' }}>Córdobas (C$)</option>
+                        <option value="$" {{ isset($proforma) && $proforma->moneda == '$' ? 'selected' : '' }}>Dólares ($)</option>
+                        <option value="C$" {{ isset($proforma) && $proforma->moneda == 'C$' ? 'selected' : '' }}>Córdobas (C$)</option>
                     </select>
                 </div>
                 <div>
@@ -71,10 +72,10 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             <div class="flex items-center gap-4">
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Responsable</label>
                 <select id="selector-usuario" name="responsable_nombre" onchange="actualizarFirma()" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl p-2.5 font-bold outline-none">
-                    <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Jammy Silva' ? 'selected' : '' }}>Jammy Silva</option>
-                    <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Maura Benavides' ? 'selected' : '' }}>Maura Benavides</option>
-                    <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Stephany Mejia' ? 'selected' : '' }}>Stephany Mejia</option>
-                    <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510" {{ isset($proforma) && isset($proforma->vendedor) && $proforma->vendedor == 'Josep Hernandez' ? 'selected' : '' }}>Josep Hernandez</option>
+                    <option value="Jammy Silva" data-cargo="Arquitecta Coordinadora" data-tel="8588-5337" {{ isset($proforma) && $proforma->vendedor == 'Jammy Silva' ? 'selected' : '' }}>Jammy Silva</option>
+                    <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648" {{ isset($proforma) && $proforma->vendedor == 'Maura Benavides' ? 'selected' : '' }}>Maura Benavides</option>
+                    <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892" {{ isset($proforma) && $proforma->vendedor == 'Stephany Mejia' ? 'selected' : '' }}>Stephany Mejia</option>
+                    <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510" {{ isset($proforma) && $proforma->vendedor == 'Josep Hernandez' ? 'selected' : '' }}>Josep Hernandez</option>
                 </select>
             </div>
         </div>
@@ -115,7 +116,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Teléfono</label>
                     <input type="text" name="telefono" value="{{ isset($proforma) ? $proforma->telefono : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
-                <div class="space-y-1.5">
+                <div class="space-y-1.5 col-span-2">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Dirección del proyecto</label>
                     <input type="text" name="direccion_proyecto" value="{{ isset($proforma) ? $proforma->direccion_proyecto : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
@@ -135,7 +136,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <tbody id="tabla-cuerpo">
                         @if(isset($proforma) && isset($proforma->detalles) && $proforma->detalles->count() > 0)
                             @foreach($proforma->detalles as $index => $detalle)
-                            <tr>
+                            <tr class="item-row">
                                 <td class="p-0 cell-height">
                                     <textarea name="items[{{ $index }}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none">{{ $detalle->descripcion }}</textarea>
                                 </td>
@@ -145,7 +146,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                 <td class="align-middle text-center">
                                     <div class="flex items-center justify-center gap-1">
                                         <span class="symbol font-bold text-gray-400">$</span>
-                                        <input type="number" name="items[{{ $index }}][precio]" value="{{ $detalle->precio_unitario }}" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                                        <input type="number" name="items[{{ $index }}][precio]" value="{{ $detalle->precio_unitario }}" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()" step="any">
                                     </div>
                                 </td>
                                 <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
@@ -155,7 +156,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                             </tr>
                             @endforeach
                         @else
-                            <tr>
+                            <tr class="item-row">
                                 <td class="p-0 cell-height">
                                     <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
                                 </td>
@@ -165,7 +166,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                 <td class="align-middle text-center">
                                     <div class="flex items-center justify-center gap-1">
                                         <span class="symbol font-bold text-gray-400">$</span>
-                                        <input type="number" name="items[0][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                                        <input type="number" name="items[0][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()" step="any">
                                     </div>
                                 </td>
                                 <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ 0</td>
@@ -178,15 +179,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <tfoot>
                         <tr class="text-xs">
                             <td colspan="2" rowspan="4" class="p-8 align-top bg-white">
-                                <div contenteditable="true"
-                                     id="txtCondiciones"
-                                     class="border border-dashed border-gray-300 p-6 rounded-2xl bg-gray-50/40 focus:outline-none focus:border-[#3d5229] focus:bg-white focus:ring-4 focus:ring-[#3d5229]/5 transition-all duration-200 group cursor-text"
-                                     title="Haz clic en cualquier lugar de este recuadro para editarlo">
-
-                                    <h4 class="font-black text-[#3d5229] uppercase mb-3 text-[11px] tracking-wider select-none group-focus:text-[#4d6635]">
-                                        Condiciones:
-                                    </h4>
-
+                                <div contenteditable="true" id="txtCondiciones" class="border border-dashed border-gray-300 p-6 rounded-2xl bg-gray-50/40 focus:outline-none focus:border-[#3d5229] focus:bg-white focus:ring-4 focus:ring-[#3d5229]/5 transition-all duration-200 group cursor-text" title="Haz clic en cualquier lugar de este recuadro para editarlo">
+                                    <h4 class="font-black text-[#3d5229] uppercase mb-3 text-[11px] tracking-wider select-none group-focus:text-[#4d6635]">Condiciones:</h4>
                                     <ul class="text-[10px] text-gray-600 space-y-2 list-disc ml-5 marker:text-[#3d5229]/70">
                                         <li>Vigencia de la cotización: 30 días calendario.</li>
                                         <li>Se requiere el 50% de anticipo para iniciar el proyecto.</li>
@@ -197,14 +191,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                 </div>
                             </td>
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px] bg-gray-50">Subtotal</td>
-                            <td class="p-5 text-right font-black text-gray-800 pr-10 bg-gray-50">
+                            <td class="p-5 text-right font-black text-gray-800 pr-10 bg-gray-50" colspan="2">
                                 <span class="symbol-res">$</span> <span id="txt-subtotal">0</span>
                                 <input type="hidden" name="subtotal_val" id="val-subtotal" value="0">
                             </td>
                         </tr>
 
                         <tr class="text-xs no-print">
-                            <td colspan="2" class="p-3 bg-gray-50/50 border-y border-gray-100">
+                            <td class="p-3 bg-gray-50/50 border-y border-gray-100" colspan="3">
                                 <div class="flex justify-around items-center">
                                     <div class="flex items-center gap-3">
                                         <label class="switch"><input type="checkbox" id="switch-desc" onchange="toggleDescuento()"><span class="slider"></span></label>
@@ -225,14 +219,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                     <option value="monto">Por Monto Fijo</option>
                                 </select>
                             </td>
-                            <td class="p-5 text-right bg-blue-50/30 pr-10">
+                            <td class="p-5 text-right bg-blue-50/30 pr-10" colspan="2">
                                 <div id="container-porcentaje" class="flex items-center justify-end">
                                     <input type="number" id="input-porcentaje-desc" class="input-totales w-12 text-blue-600" value="0" oninput="calcularDesdePorcentaje()">
                                     <span class="text-[10px] font-bold text-blue-600">%</span>
                                 </div>
                                 <div id="container-monto" class="hidden-discount flex items-center justify-end">
                                     <span class="symbol-res text-red-600 font-bold">$</span>
-                                    <input type="number" id="input-monto-desc" class="input-totales w-24 text-red-600" value="0" step="1" oninput="calcularDesdeMonto()">
+                                    <input type="number" id="input-monto-desc" class="input-totales w-24 text-red-600" value="0" step="any" oninput="calcularDesdeMonto()">
                                 </div>
                                 <input type="hidden" name="descuento_val" id="val-descuento" value="0">
                             </td>
@@ -240,14 +234,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
 
                         <tr class="text-xs">
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px]">IVA (15%)</td>
-                            <td class="p-5 text-right font-bold text-gray-500 pr-10 italic">
+                            <td class="p-5 text-right font-bold text-gray-500 pr-10 italic" colspan="2">
                                 <span class="symbol-res">$</span> <span id="txt-iva">0</span>
                                 <input type="hidden" name="iva_val" id="val-iva" value="0">
                             </td>
                         </tr>
 
                         <tr class="bg-[#3d5229] text-white">
-                            <td colspan="4" class="p-0">
+                            <td colspan="5" class="p-0">
                                 <div class="flex items-center justify-center py-6 gap-8">
                                     <span class="font-bold uppercase tracking-[0.4em] text-xs opacity-80">Total a Pagar</span>
                                     <div class="flex items-baseline gap-2 border-l border-white/20 pl-8">
@@ -258,7 +252,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                 <input type="hidden" name="total_val" id="val-total" value="0">
                             </td>
                         </tr>
-                    </tbody>
+                    </tfoot>
                 </table>
             </div>
 
@@ -275,7 +269,6 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
 
         <div class="no-print flex gap-6 mt-12 mb-20">
             <button type="button" onclick="agregarFila()" class="bg-white border-2 border-[#3d5229] text-[#3d5229] px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3d5229] hover:text-white transition-all shadow-lg">➕ Agregar Servicio</button>
-
             <button type="submit" class="bg-[#3d5229] text-white px-10 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#2c3d1f] transition-all shadow-2xl">
                 {{ isset($proforma) ? '💾 Guardar Cambios y PDF' : '🖨️ Generar PDF' }}
             </button>
@@ -283,8 +276,6 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
     </form>
 
     <script>
-        let contadorFila = document.querySelectorAll('#tabla-cuerpo tr').length;
-
         document.addEventListener("DOMContentLoaded", function() {
             const miFormulario = document.getElementById('formCotizador');
 
@@ -322,7 +313,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             }
 
             actualizarFirma();
-            calcular();
+            reindexarFilas();
         });
 
         function actualizarFirma() {
@@ -337,32 +328,47 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.getElementById('input-firma-tel').value = option.getAttribute('data-tel');
         }
 
+        function reindexarFilas() {
+            const filas = document.querySelectorAll('#tabla-cuerpo tr.item-row');
+            filas.forEach((row, index) => {
+                const desc = row.querySelector('textarea');
+                const cant = row.querySelector('input.qty');
+                const precio = row.querySelector('input.price');
+
+                if(desc) desc.setAttribute('name', `items[${index}][desc]`);
+                if(cant) cant.setAttribute('name', `items[${index}][cant]`);
+                if(precio) precio.setAttribute('name', `items[${index}][precio]`);
+            });
+            calcular();
+        }
+
         function agregarFila() {
             const tbody = document.getElementById('tabla-cuerpo');
             const simbolo = document.getElementById('selector-moneda').value;
 
-            const row = `<tr>
-                <td class="p-0 cell-height"><textarea name="items[${contadorFila}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] border-none" placeholder="Descripción..."></textarea></td>
-                <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[${contadorFila}][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
+            const row = `<tr class="item-row">
+                <td class="p-0 cell-height"><textarea name="items[999][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] border-none" placeholder="Descripción..."></textarea></td>
+                <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[999][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
                 <td class="align-middle text-center">
                     <div class="flex items-center justify-center gap-1">
                         <span class="symbol font-bold text-gray-400 italic">${simbolo}</span>
-                        <input type="number" name="items[${contadorFila}][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                        <input type="number" name="items[999][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()" step="any">
                     </div>
                 </td>
                 <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">${simbolo} 0</td>
                 <td class="align-middle text-center no-print"><button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button></td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
-            contadorFila++;
-            calcular();
+            reindexarFilas();
         }
 
         function eliminarFila(btn) {
-            if(document.querySelectorAll('#tabla-cuerpo tr').length > 1) {
+            if(document.querySelectorAll('#tabla-cuerpo tr.item-row').length > 1) {
                 btn.closest('tr').remove();
+                reindexarFilas();
+            } else {
+                calcular();
             }
-            calcular();
         }
 
         function toggleDescuento() {
@@ -408,7 +414,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.querySelectorAll('.symbol').forEach(s => s.innerText = simbolo);
             document.querySelectorAll('.symbol-res').forEach(s => s.innerText = simbolo);
 
-            document.querySelectorAll('#tabla-cuerpo tr').forEach(row => {
+            document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach(row => {
                 const qtyInput = row.querySelector('.qty');
                 const priceInput = row.querySelector('.price');
                 if(!qtyInput || !priceInput) return;
