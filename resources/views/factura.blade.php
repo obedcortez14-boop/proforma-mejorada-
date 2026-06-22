@@ -131,7 +131,6 @@
             color: #475569;
             line-height: 1.3;
             outline: none;
-            white-space: pre-wrap;
         }
 
         /* Totales */
@@ -255,17 +254,7 @@
             <td style="width: 55%;">
                 <div class="validity-box">
                     <div class="validity-title">Condiciones:</div>
-                    <div class="editable-conditions-block" id="txtCondiciones">
-                        @if(!empty($condiciones) && !is_array($condiciones))
-                            {!! nl2br(e($condiciones)) !!}
-                        @else
-                            • Vigencia de la cotización: 30 días calendario.<br>
-                            • Se requiere el 50% de anticipo para iniciar el proyecto.<br>
-                            • El 50% restante se cancelará contra entrega de los baldes.<br>
-                            • Tiempo de entrega estimado: 3 a 5 días hábiles.<br>
-                            • Precios sujetos a cambios sin previo aviso.
-                        @endif
-                    </div>
+                    <div class="editable-conditions-block" id="txtCondiciones">@if(!empty($condiciones) && !is_array($condiciones)){!! nl2br(e($condiciones)) !!}@else• Vigencia de la cotización: 30 días calendario.<br>• Se requiere el 50% de anticipo para iniciar el proyecto.<br>• El 50% restante se cancelará contra entrega del trabajo.<br>• Tiempo de entrega estimado: 3 a 5 días hábiles.<br>• Precios sujetos a cambios sin previo aviso.@endif</div>
                 </div>
             </td>
 
