@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema; // Se agrega para limpiar la advertencia visual de Schema
+use Illuminate\Support\Facades\Schema;
 use App\Models\Proforma;
 use App\Models\ProformaDetalle;
 use Exception;
@@ -27,10 +27,7 @@ class CalculadoraController extends Controller
     // =====================================================
     public function edit($id)
     {
-        // Busca la proforma con todos sus detalles incluidos, si no existe lanza un 404
         $proforma = Proforma::with('detalles')->findOrFail($id);
-
-        // Retorna tu vista edit.blade.php pasándole la información de la base de datos
         return view('proformas.edit', compact('proforma'));
     }
 
@@ -81,12 +78,8 @@ class CalculadoraController extends Controller
             $proforma->impuesto        = (float) $request->input('iva_val', 0);
             $proforma->total           = (float) $request->input('total_val', 0);
             $proforma->observaciones   = $request->input('contacto');
-
-            // 🔄 MODIFICACIÓN: Guarda el estado dinámico del formulario (Borrador, Emitido, Facturado, Aprobado)
             $proforma->estado          = $request->input('estado') ?? 'Borrador';
-
-            $proforma->vendedor        = $request->input('responsable_nombre'); // Guarda el creador original en SQL Server
-
+            $proforma->vendedor        = $request->input('responsable_nombre');
             $proforma->ruc_cedula         = $request->input('ruc');
             $proforma->telefono           = $request->input('telefono');
             $proforma->direccion_proyecto = $request->input('direccion_proyecto');
@@ -106,16 +99,16 @@ class CalculadoraController extends Controller
                 $detalle->save();
             }
 
-            // Confirmamos la transacción en SQL Server
             DB::commit();
 
             $fechaEmisionFinal = $proforma->fecha_emision;
             return $this->descargarPdfMapeado($request, $nuevoContador, $fechaEmisionFinal);
 
-     } catch (Exception $e) {
-    DB::rollBack();
-    return back()->withErrors('Error crítico al crear: ' . $e->getMessage())->withInput();
-}
+        } catch (Exception $e) {
+            DB::rollBack();
+            // ⚡ OBLIGAMOS A LARAVEL A MOSTRAR EL ERROR REAL EN PANTALLA EN LUGAR DE VOLVER ATRÁS SIN HACER NADA
+            dd("Error detectado en el proceso de guardado:", $e->getMessage(), "Archivo: " . $e->getFile() . " Línea: " . $e->getLine());
+        }
     }
 
     // =====================================================
@@ -133,11 +126,8 @@ class CalculadoraController extends Controller
             $proforma->impuesto           = (float) $request->input('iva_val', 0);
             $proforma->total              = (float) $request->input('total_val', 0);
             $proforma->observaciones      = $request->input('contacto') ?? $proforma->observaciones;
-
-            // 🔄 MODIFICACIÓN: Actualiza el estado dinámico modificado desde la pantalla de edición
             $proforma->estado             = $request->input('estado') ?? $proforma->estado;
-
-            $proforma->vendedor           = $request->input('responsable_nombre') ?? $proforma->vendedor; // Guarda quién editó en SQL Server
+            $proforma->vendedor           = $request->input('responsable_nombre') ?? $proforma->vendedor;
             $proforma->ruc_cedula         = $request->input('ruc') ?? $proforma->ruc_cedula;
             $proforma->telefono           = $request->input('telefono') ?? $proforma->telefono;
             $proforma->direccion_proyecto = $request->input('direccion_proyecto') ?? $proforma->direccion_proyecto;
@@ -158,11 +148,11 @@ class CalculadoraController extends Controller
                 $detalle->proforma_id     = $proforma->id;
                 $detalle->descripcion     = $item['desc'] ?? 'Servicio Profesional';
 
-                // Mapeo seguro usando la clase Schema importada correctamente
                 if (Schema::hasColumn('proforma_detalles', 'text')) {
                     $detalle->text = $item['desc'] ?? 'Servicio Profesional';
                 }
 
+                $detalle->text            = $item['desc'] ?? 'Servicio Profesional';
                 $detalle->cantidad        = (int) ($item['cant'] ?? 1);
                 $detalle->precio_unitario = (float) ($item['precio'] ?? 0);
                 $detalle->subtotal        = $detalle->cantidad * $detalle->precio_unitario;
@@ -170,7 +160,6 @@ class CalculadoraController extends Controller
                 $detalle->save();
             }
 
-            // Confirmamos la transacción en SQL Server
             DB::commit();
 
             $numContador = '0001';
@@ -185,14 +174,15 @@ class CalculadoraController extends Controller
                 'telefono' => $request->input('telefono') ?? $proforma->telefono,
                 'direccion_proyecto' => $request->input('direccion_proyecto') ?? $proforma->direccion_proyecto,
                 'responsable_nombre' => $request->input('responsable_nombre') ?? $proforma->vendedor,
-                'estado' => $request->input('estado') ?? $proforma->estado // Asegura el estado dentro del Request
+                'estado' => $request->input('estado') ?? $proforma->estado
             ]);
 
             return $this->descargarPdfMapeado($request, $numContador, $proforma->fecha_emision);
 
         } catch (Exception $e) {
             DB::rollBack();
-            return back()->withErrors('Error crítico en SQL Server: ' . $e->getMessage())->withInput();
+            // ⚡ OBLIGAMOS A LARAVEL A MOSTRAR EL ERROR REAL EN PANTALLA EN LUGAR DE VOLVER ATRÁS
+            dd("Error detectado en el proceso de actualización:", $e->getMessage(), "Línea: " . $e->getLine());
         }
     }
 
@@ -202,16 +192,23 @@ class CalculadoraController extends Controller
     private function descargarPdfMapeado(Request $request, $nuevoContador, $fechaEmision = null)
     {
         $logo = null;
-        $logoPath = public_path('imagen/LOGO JPG.jpg');
+        // 🛠️ SOPORTE MULTIPLATAFORMA PARA EL LOGO (Elimina conflictos de mayúsculas/minúsculas de Linux)
+        $posiblesLogos = [
+            public_path('imagen/LOGO JPG.jpg'),
+            public_path('imagen/logo.jpg'),
+            public_path('imagen/logo.png')
+        ];
 
-        // 🛠️ MEJORA DE ESTABILIDAD: Si el archivo existe, lo leemos de manera segura controlando excepciones
-        if (file_exists($logoPath) && is_readable($logoPath)) {
-            try {
-                $extension = pathinfo($logoPath, PATHINFO_EXTENSION);
-                $logoData = base64_encode(file_get_contents($logoPath));
-                $logo = 'data:image/' . $extension . ';base64,' . $logoData;
-            } catch (Exception $ex) {
-                $logo = null; // Previene que se cuelgue la descarga si falla el buffer de lectura
+        foreach ($posiblesLogos as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                try {
+                    $extension = pathinfo($path, PATHINFO_EXTENSION);
+                    $logoData = base64_encode(file_get_contents($path));
+                    $logo = 'data:image/' . $extension . ';base64,' . $logoData;
+                    break;
+                } catch (Exception $ex) {
+                    $logo = null;
+                }
             }
         }
 
@@ -255,7 +252,7 @@ class CalculadoraController extends Controller
         ];
 
         $pdf = Pdf::loadView('factura', $data)
-                  ->setPaper('letter', 'portrait') // Cambiado a 'letter' para coincidir perfectamente con tu CSS @page
+                  ->setPaper('letter', 'portrait')
                   ->setOptions([
                       'isRemoteEnabled' => true,
                       'isHtml5ParserEnabled' => true
@@ -263,12 +260,8 @@ class CalculadoraController extends Controller
 
         $nombreArchivo = 'Prof-ready-' . $nuevoContador . '.pdf';
 
-        // ⚡ CORRECCIÓN CLAVE: Agregamos las cabeceras HTTP explícitas de descarga para obligar al navegador a procesarlo como archivo binario.
-        return response($pdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $nombreArchivo . '"',
-            'Cache-Control' => 'no-cache, private',
-            'Pragma' => 'no-cache'
-        ]);
+        // ⚡ CAMBIO ESTRATÉGICO: Usamos stream() en lugar de forzar descarga binaria rígida.
+        // Esto abrirá el PDF directamente o saltará el diálogo nativo sin interferencias del proxy de Railway.
+        return $pdf->stream($nombreArchivo);
     }
 }
