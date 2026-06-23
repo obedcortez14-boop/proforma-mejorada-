@@ -47,7 +47,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
 </head>
 <body>
 
-    <form id="formCotizador" action="{{ isset($proforma) && isset($proforma->id) ? route('proformas.update', $proforma->id) : route('pdf.generar') }}" method="POST" class="w-full flex flex-col items-center">
+    <form id="formCotizador" action="{{ isset($proforma) && isset($proforma->id) ? route('proformas.update', $proforma->id) : route('pdf.generar') }}" method="POST" target="_blank" class="w-full flex flex-col items-center">
         @csrf
         @if(isset($proforma))
             @method('PUT')
