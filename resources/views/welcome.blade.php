@@ -77,7 +77,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892" {{ isset($proforma) && $proforma->vendedor == 'Stephany Mejia' ? 'selected' : '' }}>Stephany Mejia</option>
                    <option value="Josep Medrano" data-cargo="Arquitecto Supervisor" data-tel="8373-2510" {{ isset($proforma) && $proforma->vendedor == 'Josep Medrano' ? 'selected' : '' }}>Josep Medrano</option>
                    <option value="Braulio Duarte" data-cargo="Jefe de Ventas-Empresariales" data-tel="7886-2971" {{ isset($proforma) && $proforma->vendedor == 'Braulio Duarte' ? 'selected' : '' }}>Braulio Duarte</option>
-                   <option value="Jan Herrera" data-cargo=" Ventas-Empresariales" data-tel="8252-9465" {{ isset($proforma) && $proforma->vendedor == 'Jan Herrera' ? 'selected' : '' }}>Jan Herrera</option>
+                   <option value="Jan Herrera" data-cargo=" Ventas-Empresariales" data-tel="83808039" {{ isset($proforma) && $proforma->vendedor == 'Jan Herrera' ? 'selected' : '' }}>Jan Herrera</option>
                 </select>
             </div>
         </div>
