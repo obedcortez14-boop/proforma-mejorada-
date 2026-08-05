@@ -96,7 +96,12 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                 <div class="bg-white/10 backdrop-blur-md text-white p-4 rounded-2xl border border-white/20 text-center min-w-[160px] z-10">
                     <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">No. <span class="text-white text-lg font-black block mt-1"><?php echo $nuevoContador; ?></span></p>
                     <input type="hidden" name="numero_proforma" value="<?php echo $nuevoContador; ?>">
-                    <p class="text-[9px] font-bold border-t border-white/20 pt-2 mt-1">FECHA: {{ isset($proforma->fecha_emision) ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('d/m/Y') : date('d/m/Y') }}</p>
+
+                    <!-- CAMBIO DE FECHA DE EMISIÓN -->
+                    <div class="border-t border-white/20 pt-2 mt-1">
+                        <label class="block text-[8px] font-bold opacity-80 uppercase tracking-widest mb-0.5">FECHA:</label>
+                        <input type="date" name="fecha_emision" value="{{ isset($proforma->fecha_emision) ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('Y-m-d') : date('Y-m-d') }}" class="bg-transparent text-white font-bold text-xs text-center outline-none border border-white/30 rounded-lg px-1 py-0.5 w-full cursor-pointer hover:bg-white/10 focus:bg-white/20 transition-all">
+                    </div>
                 </div>
             </div>
 

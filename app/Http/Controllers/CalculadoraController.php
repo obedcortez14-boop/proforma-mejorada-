@@ -70,10 +70,13 @@ class CalculadoraController extends Controller
             curl_exec($chUpdate);
             curl_close($chUpdate);
 
+            // CAPTURA DE FECHA DE EMISIÓN DESDE EL FORMULARIO
+            $fechaEmisionInput = $request->input('fecha_emision') ?? date('Y-m-d');
+
             $proforma = new Proforma();
             $proforma->codigo_proforma = $codigoFinal;
             $proforma->cliente         = $request->input('cliente') ?? 'Consumidor Final';
-            $proforma->fecha_emision   = date('Y-m-d');
+            $proforma->fecha_emision   = $fechaEmisionInput; // <-- AHORA USA LA FECHA ENVIADA
             $proforma->subtotal        = (float) $request->input('subtotal_val', 0);
             $proforma->impuesto        = (float) $request->input('iva_val', 0);
             $proforma->total           = (float) $request->input('total_val', 0);
@@ -101,12 +104,10 @@ class CalculadoraController extends Controller
 
             DB::commit();
 
-            $fechaEmisionFinal = $proforma->fecha_emision;
-            return $this->descargarPdfMapeado($request, $nuevoContador, $fechaEmisionFinal);
+            return $this->descargarPdfMapeado($request, $nuevoContador, $proforma->fecha_emision);
 
         } catch (Exception $e) {
             DB::rollBack();
-            // ⚡ OBLIGAMOS A LARAVEL A MOSTRAR EL ERROR REAL EN PANTALLA EN LUGAR DE VOLVER ATRÁS SIN HACER NADA
             dd("Error detectado en el proceso de guardado:", $e->getMessage(), "Archivo: " . $e->getFile() . " Línea: " . $e->getLine());
         }
     }
@@ -120,6 +121,11 @@ class CalculadoraController extends Controller
 
         try {
             $proforma = Proforma::findOrFail($id);
+
+            // CAPTURA Y ACTUALIZACIÓN DE FECHA
+            if ($request->filled('fecha_emision')) {
+                $proforma->fecha_emision = $request->input('fecha_emision');
+            }
 
             $proforma->cliente            = $request->input('cliente') ?? $proforma->cliente;
             $proforma->subtotal           = (float) $request->input('subtotal_val', 0);
@@ -181,7 +187,6 @@ class CalculadoraController extends Controller
 
         } catch (Exception $e) {
             DB::rollBack();
-            // ⚡ OBLIGAMOS A LARAVEL A MOSTRAR EL ERROR REAL EN PANTALLA EN LUGAR DE VOLVER ATRÁS
             dd("Error detectado en el proceso de actualización:", $e->getMessage(), "Línea: " . $e->getLine());
         }
     }
@@ -192,7 +197,6 @@ class CalculadoraController extends Controller
     private function descargarPdfMapeado(Request $request, $nuevoContador, $fechaEmision = null)
     {
         $logo = null;
-        // 🛠️ SOPORTE MULTIPLATAFORMA PARA EL LOGO (Elimina conflictos de mayúsculas/minúsculas de Linux)
         $posiblesLogos = [
             public_path('imagen/LOGO JPG.jpg'),
             public_path('imagen/logo.jpg'),
@@ -218,6 +222,8 @@ class CalculadoraController extends Controller
             'Maura Benavides' => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
             'Stephany Mejia'  => ['cargo' => 'Gerente Comercial', 'tel' => '8998-0892'],
             'Josep Hernandez' => ['cargo' => 'Arquitecto Supervisor', 'tel' => '8373-2510'],
+            'Braulio Duarte' => ['cargo' => 'Jefe de Ventas-Empresariales', 'tel' => '7886-2971'],
+            'Jan Herrera' => ['cargo' => ' Ventas-Empresariales', 'tel' => '8252-9465']
         ];
 
         if (array_key_exists($responsableNombre, $firmas)) {
@@ -228,7 +234,9 @@ class CalculadoraController extends Controller
             $tel   = $request->input('pdf_firma_tel', '0000-0000');
         }
 
-        $fechaFormateada = $fechaEmision ? date('d/m/Y', strtotime($fechaEmision)) : date('d/m/Y');
+        // TOMA LA FECHA PASADA O LA DEL REQUEST O LA ACTUAL COMO ÚLTIMA OPCIÓN
+        $fechaRaw = $fechaEmision ?? $request->input('fecha_emision') ?? date('Y-m-d');
+        $fechaFormateada = date('d/m/Y', strtotime($fechaRaw));
 
         $data = [
             'logo'               => $logo,
@@ -260,8 +268,6 @@ class CalculadoraController extends Controller
 
         $nombreArchivo = 'Prof-ready-' . $nuevoContador . '.pdf';
 
-        // ⚡ CAMBIO ESTRATÉGICO: Usamos stream() en lugar de forzar descarga binaria rígida.
-        // Esto abrirá el PDF directamente o saltará el diálogo nativo sin interferencias del proxy de Railway.
         return $pdf->stream($nombreArchivo);
     }
 }
