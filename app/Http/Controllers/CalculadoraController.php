@@ -223,7 +223,7 @@ class CalculadoraController extends Controller
             'Stephany Mejia'  => ['cargo' => 'Gerente Comercial', 'tel' => '8998-0892'],
             'Josep Hernandez' => ['cargo' => 'Arquitecto Supervisor', 'tel' => '8373-2510'],
             'Braulio Duarte' => ['cargo' => 'Jefe de Ventas-Empresariales', 'tel' => '7886-2971'],
-            'Jan Herrera' => ['cargo' => ' Ventas-Empresariales', 'tel' => '8252-9465']
+            'Jan Herrera' => ['cargo' => ' Ventas-Empresariales', 'tel' => '8380 8039']
         ];
 
         if (array_key_exists($responsableNombre, $firmas)) {
