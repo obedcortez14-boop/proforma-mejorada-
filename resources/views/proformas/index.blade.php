@@ -45,9 +45,10 @@
                     <td>
                         {{ $proforma->fecha_emision ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('d/m/Y') : 'N/A' }}
                     </td>
-                    <td>${{ number_format($proforma->subtotal, 2) }}</td>
-                    <td>${{ number_format($proforma->impuesto, 2) }}</td>
-                    <td><strong>${{ number_format($proforma->total, 2) }}</strong></td>
+                    {{-- Símbolo de moneda dinámico: C$ para Córdobas (NIO/C$), $ para Dólares (USD) --}}
+                    <td>@if($proforma->moneda == 'NIO' || $proforma->moneda == 'C$') C$ @else $ @endif{{ number_format($proforma->subtotal, 2) }}</td>
+                    <td>@if($proforma->moneda == 'NIO' || $proforma->moneda == 'C$') C$ @else $ @endif{{ number_format($proforma->impuesto, 2) }}</td>
+                    <td><strong>@if($proforma->moneda == 'NIO' || $proforma->moneda == 'C$') C$ @else $ @endif{{ number_format($proforma->total, 2) }}</strong></td>
                     <td>
                         {{-- Evaluador de estados dinámico para asignar colores --}}
                         @switch($proforma->estado)

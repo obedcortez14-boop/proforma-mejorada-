@@ -42,6 +42,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         .signature-line { width: 250px; border-top: 2px solid #3d5229; margin-bottom: 15px; }
         .input-totales { background: transparent; border-bottom: 1px dashed #cbd5e1; text-align: right; outline: none; font-weight: bold; }
         .hidden-discount { display: none !important; }
+        /* ===== Formateador de descripciones (formatDescripcionProforma) ===== */
+        .desc-titulo { font-weight: 700; color: #111827; display: block; margin-bottom: 4px; }
+        .desc-clave { font-weight: 700; color: #111827; }
+        .vista-previa-desc { border-top: 1px dashed #d1d5db; margin-top: 8px; padding-top: 6px; color: #4b5563; font-size: 10px; line-height: 1.5; }
+        .vista-previa-desc .desc-titulo { margin-bottom: 2px; font-size: 11px; }
+        .vista-previa-desc.hidden { display: none !important; }
+        .vista-previa-label { font-size: 8px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #9ca3af; display: block; margin-bottom: 3px; }
+        .vista-previa-contenido { display: block; }
         @media print { .no-print { display: none !important; } body { background: white; padding: 0; margin: 0; } .proforma-container { box-shadow: none; border: none; } }
     </style>
 </head>
@@ -138,9 +146,23 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <tbody id="tabla-cuerpo">
                         @if(isset($proforma) && isset($proforma->detalles) && $proforma->detalles->count() > 0)
                             @foreach($proforma->detalles as $index => $detalle)
+                            @php
+                                // La PRIMERA línea de la descripción guardada es el TÍTULO del servicio (se muestra en negrita);
+                                // el resto de las líneas son el DETALLE del servicio.
+                                $lineasDesc   = explode("\n", (string) $detalle->descripcion);
+                                $tituloItem   = trim($lineasDesc[0] ?? '');
+                                $detalleTexto = count($lineasDesc) > 1 ? trim(implode("\n", array_slice($lineasDesc, 1))) : '';
+                            @endphp
                             <tr class="item-row">
                                 <td class="p-0 cell-height">
-                                    <textarea name="items[{{ $index }}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none">{{ $detalle->descripcion }}</textarea>
+                                    <div class="w-full h-full p-5 flex flex-col justify-start">
+                                        <input type="text" name="items[{{ $index }}][titulo]" value="{{ $tituloItem }}" placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
+                                        <textarea name="items[{{ $index }}][desc]" class="w-full flex-1 min-h-[60px] outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio...">{{ $detalleTexto }}</textarea>
+                                        <div class="vista-previa-desc no-print hidden">
+                                            <span class="vista-previa-label">Vista previa</span>
+                                            <div class="vista-previa-contenido"></div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="align-middle text-center bg-gray-50/30">
                                     <input type="number" name="items[{{ $index }}][cant]" value="{{ $detalle->cantidad }}" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
@@ -160,7 +182,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                         @else
                             <tr class="item-row">
                                 <td class="p-0 cell-height">
-                                    <textarea name="items[0][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
+                                    <div class="w-full h-full p-5 flex flex-col justify-start">
+                                        <input type="text" name="items[0][titulo]" value="1. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
+                                        <textarea name="items[0][desc]" class="w-full flex-1 min-h-[60px] outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
+                                        <div class="vista-previa-desc no-print hidden">
+                                            <span class="vista-previa-label">Vista previa</span>
+                                            <div class="vista-previa-contenido"></div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="align-middle text-center bg-gray-50/30">
                                     <input type="number" name="items[0][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
@@ -316,6 +345,18 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
 
             actualizarFirma();
             reindexarFilas();
+
+            // Vista previa inicial de las filas cargadas (proformas existentes)
+            document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach(actualizarVistaPreviaFila);
+
+            // Renderizado en tiempo real: al escribir en la celda de descripción
+            const tablaCuerpo = document.getElementById('tabla-cuerpo');
+            if (tablaCuerpo) {
+                tablaCuerpo.addEventListener('input', function(e) {
+                    const fila = e.target.closest('tr.item-row');
+                    if (fila) actualizarVistaPreviaFila(fila);
+                });
+            }
         });
 
         function actualizarFirma() {
@@ -330,16 +371,97 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.getElementById('input-firma-tel').value = option.getAttribute('data-tel');
         }
 
+        // ============================================================
+        // FORMATEADOR DINÁMICO DE DESCRIPCIONES COMPLEJAS (JS)
+        // Espejo exacto del helper PHP formatDescripcionProforma():
+        //  - 1ª línea: título principal en negrita.
+        //  - Líneas con viñeta (•, -, –, *) y/o "Clave:" → clave en negrita.
+        //  - Saltos de línea (\n) convertidos a <br>.
+        // ============================================================
+        function escapeHtmlProforma(texto) {
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatLineaDescripcion(linea) {
+            const m = linea.match(/^(\s*[•\-–*]\s*)?([^:\n]{1,60}?):\s*([\s\S]*)$/);
+            if (m) {
+                const vineta = (m[1] || '').trim();
+                const clave = m[2].trim();
+                const resto = m[3].trim();
+                // La clave debe contener al menos una letra (evita falsos positivos tipo "10:30 am")
+                if (clave !== '' && /[A-Za-zÁÉÍÓÚáéíóúÑñÜü]/.test(clave)) {
+                    let html = '<b class="font-bold text-gray-900 desc-clave">' + escapeHtmlProforma(vineta !== '' ? vineta + ' ' : '') + escapeHtmlProforma(clave) + ':</b>';
+                    if (resto !== '') html += ' ' + escapeHtmlProforma(resto);
+                    return html;
+                }
+            }
+            return escapeHtmlProforma(linea);
+        }
+
+        function formatDescripcionProforma(texto) {
+            const lineas = String(texto || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            let html = '';
+            let primera = true;
+
+            lineas.forEach(function(linea) {
+                const limpia = linea.trim();
+                if (limpia === '') return;
+                if (primera) {
+                    html += '<strong class="font-bold text-gray-900 block mb-1 desc-titulo">' + escapeHtmlProforma(limpia) + '</strong>';
+                    primera = false;
+                    return;
+                }
+                html += '<br>' + formatLineaDescripcion(limpia);
+            });
+
+            return html;
+        }
+
+        // Actualiza el panel de vista previa en tiempo real de una fila de servicio
+        function actualizarVistaPreviaFila(row) {
+            if (!row) return;
+            const titulo = row.querySelector('input[name*="[titulo]"]');
+            const desc = row.querySelector('textarea[name*="[desc]"]');
+            const previa = row.querySelector('.vista-previa-desc');
+            if (!previa) return;
+
+            const contenido = previa.querySelector('.vista-previa-contenido');
+            const detalleTexto = desc ? desc.value : '';
+            const textoCompleto = ((titulo && titulo.value ? titulo.value.trim() : '') + '\n' + detalleTexto.trim()).trim();
+
+            if (textoCompleto === '' || detalleTexto.trim() === '') {
+                contenido.innerHTML = '';
+                previa.classList.add('hidden');
+                return;
+            }
+
+            contenido.innerHTML = formatDescripcionProforma(textoCompleto);
+            previa.classList.remove('hidden');
+        }
+
         function reindexarFilas() {
             const filas = document.querySelectorAll('#tabla-cuerpo tr.item-row');
             filas.forEach((row, index) => {
-                const desc = row.querySelector('textarea');
+                const titulo = row.querySelector('input[name*="[titulo]"]');
+                const desc = row.querySelector('textarea[name*="[desc]"]');
                 const cant = row.querySelector('input.qty');
                 const precio = row.querySelector('input.price');
 
+                if(titulo) titulo.setAttribute('name', `items[${index}][titulo]`);
                 if(desc) desc.setAttribute('name', `items[${index}][desc]`);
                 if(cant) cant.setAttribute('name', `items[${index}][cant]`);
                 if(precio) precio.setAttribute('name', `items[${index}][precio]`);
+
+                // Numeración consecutiva del título: reemplaza el prefijo "N. " (ej: 1. , 2. , 3.)
+                // por el número actual de la fila. Si el usuario escribió un título sin numerar, no se toca.
+                if(titulo && /^\s*\d+\.(?:\s+|$)/.test(titulo.value)) {
+                    titulo.value = titulo.value.replace(/^\s*\d+\.(?:\s+|$)/, (index + 1) + '. ');
+                }
             });
             calcular();
         }
@@ -347,9 +469,15 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         function agregarFila() {
             const tbody = document.getElementById('tabla-cuerpo');
             const simbolo = document.getElementById('selector-moneda').value;
+            const numeroTitulo = tbody.querySelectorAll('tr.item-row').length + 1;
 
             const row = `<tr class="item-row">
-                <td class="p-0 cell-height"><textarea name="items[999][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] border-none" placeholder="Descripción..."></textarea></td>
+                <td class="p-0 cell-height">
+                    <div class="w-full h-full p-5 flex flex-col justify-start">
+                        <input type="text" name="items[999][titulo]" value="${numeroTitulo}. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
+                        <textarea name="items[999][desc]" class="w-full flex-1 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
+                    </div>
+                </td>
                 <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[999][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
                 <td class="align-middle text-center">
                     <div class="flex items-center justify-center gap-1">
@@ -362,6 +490,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
             reindexarFilas();
+            actualizarVistaPreviaFila(tbody.lastElementChild);
         }
 
         function eliminarFila(btn) {

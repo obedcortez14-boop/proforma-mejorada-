@@ -101,6 +101,9 @@
         .items-table th { background-color: #3d5229; color: white; font-size: 8.5px; text-transform: uppercase; padding: 5px; text-align: center; }
         .items-table td { border: 1px solid #e2e8f0; padding: 4px; font-size: 9px; }
         .col-descripcion { word-wrap: break-word; white-space: pre-line; vertical-align: top; text-align: left; }
+        /* Formato de descripciones complejas (formatDescripcionProforma) */
+        .desc-titulo { font-weight: bold; color: #111827; display: block; margin-bottom: 2px; }
+        .desc-clave { font-weight: bold; color: #111827; }
 
         /* Estructura de Cierre Balanceada (Lado a Lado) */
         .summary-table {
@@ -240,7 +243,7 @@
         <tbody>
             @foreach($items as $item)
             <tr>
-                <td class="col-descripcion">{{ $item['desc'] }}</td>
+                <td class="col-descripcion">{!! formatDescripcionProforma($item['desc'] ?? '') !!}</td>
                 <td style="text-align: center; font-weight: bold; vertical-align: top;">{{ $item['cant'] }}</td>
                 <td style="text-align: right; vertical-align: top;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['precio'], 2) }}</td>
                 <td style="text-align: right; font-weight: bold; vertical-align: top;">{{ $moneda_simbolo ?? '$' }} {{ number_format($item['cant'] * $item['precio'], 2) }}</td>

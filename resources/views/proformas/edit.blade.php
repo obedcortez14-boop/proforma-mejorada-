@@ -24,6 +24,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         .signature-line { width: 250px; border-top: 2px solid #3d5229; margin-bottom: 15px; }
         .input-totales { background: transparent; border-bottom: 1px dashed #cbd5e1; text-align: right; outline: none; font-weight: bold; }
         .hidden-discount { display: none !important; }
+        /* ===== Formateador de descripciones (formatDescripcionProforma) ===== */
+        .desc-titulo { font-weight: 700; color: #111827; display: block; margin-bottom: 4px; }
+        .desc-clave { font-weight: 700; color: #111827; }
+        .vista-previa-desc { border-top: 1px dashed #d1d5db; margin-top: 8px; padding-top: 6px; color: #4b5563; font-size: 10px; line-height: 1.5; }
+        .vista-previa-desc .desc-titulo { margin-bottom: 2px; font-size: 11px; }
+        .vista-previa-desc.hidden { display: none !important; }
+        .vista-previa-label { font-size: 8px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #9ca3af; display: block; margin-bottom: 3px; }
+        .vista-previa-contenido { display: block; }
         @media print { .no-print { display: none !important; } body { background: white; padding: 0; margin: 0; } .proforma-container { box-shadow: none; border: none; } }
     </style>
 </head>
@@ -40,7 +48,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         </div>
     @endif
 
-    <form id="formCotizador" action="{{ route('proformas.update', $proforma->id) }}" method="POST" novalidate class="w-full flex flex-col items-center">
+    <form id="formCotizador" action="{{ route('proformas.update', $proforma->id) }}" method="POST" class="w-full flex flex-col items-center">
         @csrf
         @method('PUT')
 
@@ -78,6 +86,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                         <option value="Maura Benavides" data-cargo="Ejecutiva de Negocios" data-tel="8560-0648" {{ $proforma->vendedor == 'Maura Benavides' ? 'selected' : '' }}>Maura Benavides</option>
                         <option value="Stephany Mejia" data-cargo="Gerente Comercial" data-tel="8998-0892" {{ $proforma->vendedor == 'Stephany Mejia' ? 'selected' : '' }}>Stephany Mejia</option>
                         <option value="Josep Hernandez" data-cargo="Arquitecto Supervisor" data-tel="8373-2510" {{ $proforma->vendedor == 'Josep Hernandez' ? 'selected' : '' }}>Josep Hernandez</option>
+                         <option value="Braulio Duarte" data-cargo="Jefe de Ventas-Empresariales" data-tel="7886-2971" {{ $proforma->vendedor == 'Braulio Duarte' ? 'selected' : '' }}>Braulio Duarte</option>
+                          <option value="Jan Herrera" data-cargo=" Ventas-Empresariales" data-tel="8380-8039" {{ $proforma->vendedor == 'Jan Herrera' ? 'selected' : '' }}>Jan Herrera</option>
                     </select>
                 </div>
             </div>
@@ -97,7 +107,6 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">No. <span class="text-white text-lg font-black block mt-1"><?php echo $nuevoContador; ?></span></p>
                     <input type="hidden" name="numero_proforma" value="<?php echo $nuevoContador; ?>">
 
-                    <!-- CAMBIO DE FECHA DE EMISIÓN -->
                     <div class="border-t border-white/20 pt-2 mt-1">
                         <label class="block text-[8px] font-bold opacity-80 uppercase tracking-widest mb-0.5">FECHA:</label>
                         <input type="date" name="fecha_emision" value="{{ isset($proforma->fecha_emision) ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('Y-m-d') : date('Y-m-d') }}" class="bg-transparent text-white font-bold text-xs text-center outline-none border border-white/30 rounded-lg px-1 py-0.5 w-full cursor-pointer hover:bg-white/10 focus:bg-white/20 transition-all">
@@ -143,10 +152,24 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     </thead>
                     <tbody id="tabla-cuerpo">
                         @foreach($proforma->detalles as $index => $detalle)
-                        <tr>
+                        @php
+                            // La PRIMERA línea de la descripción guardada es el TÍTULO del servicio (se muestra en negrita);
+                            // el resto de las líneas son el DETALLE del servicio.
+                            $lineasDesc   = explode("\n", (string) $detalle->descripcion);
+                            $tituloItem   = trim($lineasDesc[0] ?? '');
+                            $detalleTexto = count($lineasDesc) > 1 ? trim(implode("\n", array_slice($lineasDesc, 1))) : '';
+                        @endphp
+                        <tr class="item-row">
                             <input type="hidden" name="items[{{ $index }}][id]" value="{{ $detalle->id }}">
                             <td class="p-0 cell-height">
-                                <textarea name="items[{{ $index }}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] leading-relaxed border-none">{{ $detalle->descripcion }}</textarea>
+                                <div class="w-full h-full p-5 flex flex-col justify-start">
+                                    <input type="text" name="items[{{ $index }}][titulo]" value="{{ $tituloItem }}" placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
+                                    <textarea name="items[{{ $index }}][desc]" class="w-full flex-1 min-h-[60px] outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio...">{{ $detalleTexto }}</textarea>
+                                    <div class="vista-previa-desc no-print hidden">
+                                        <span class="vista-previa-label">Vista previa</span>
+                                        <div class="vista-previa-contenido"></div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="align-middle text-center bg-gray-50/30">
                                 <input type="number" name="items[{{ $index }}][cant]" value="{{ $detalle->cantidad }}" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()">
@@ -157,7 +180,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                     <input type="number" step="0.01" name="items[{{ $index }}][precio]" value="{{ $detalle->precio_unitario }}" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
                                 </div>
                             </td>
-                            <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ {{ number_format($detalle->subtotal, 2, '.', '') }}</td>
+                            <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">$ {{ number_format($detalle->subtotal, 2, '.', ',') }}</td>
                             <td class="align-middle text-center no-print">
                                 <button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button>
                             </td>
@@ -181,14 +204,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                         <ul class="text-[10px] text-gray-600 space-y-2 list-disc ml-5 marker:text-[#3d5229]/70">
                                             <li>Vigencia de la cotización: 30 días calendario.</li>
                                             <li>Se requiere el 50% de anticipo para iniciar el proyecto.</li>
-                                            <li>Se requiere el 50% de anticipo para iniciar el proyecto.</li>
+                                            <li>El 50% restante será cancelado al momento de la entrega.</li>
                                         </ul>
                                     @endif
                                 </div>
                             </td>
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px] bg-gray-50">Subtotal</td>
                             <td class="p-5 text-right font-black text-gray-800 pr-10 bg-gray-50">
-                                <span class="symbol-res">$</span> <span id="txt-subtotal">{{ $proforma->subtotal }}</span>
+                                <span class="symbol-res">$</span> <span id="txt-subtotal">{{ number_format($proforma->subtotal, 2, '.', ',') }}</span>
                                 <input type="hidden" name="subtotal_val" id="val-subtotal" value="{{ $proforma->subtotal }}">
                             </td>
                         </tr>
@@ -236,7 +259,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                         <tr>
                             <td class="p-5 font-bold text-gray-400 uppercase text-[9px]">IVA (15%)</td>
                             <td class="p-5 text-right font-bold text-gray-500 pr-10 italic">
-                                <span class="symbol-res">$</span> <span id="txt-iva">{{ $proforma->impuesto }}</span>
+                                <span class="symbol-res">$</span> <span id="txt-iva">{{ number_format($proforma->impuesto, 2, '.', ',') }}</span>
                                 <input type="hidden" name="iva_val" id="val-iva" value="{{ $proforma->impuesto }}">
                             </td>
                         </tr>
@@ -247,13 +270,13 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                                     <span class="font-bold uppercase tracking-[0.4em] text-xs opacity-80">Total Modificado</span>
                                     <div class="flex items-baseline gap-2 border-l border-white/20 pl-8">
                                         <span class="symbol-res text-xl font-light opacity-70">$</span>
-                                        <span id="txt-total" class="font-black text-4xl italic tracking-tighter">{{ $proforma->total }}</span>
+                                        <span id="txt-total" class="font-black text-4xl italic tracking-tighter">{{ number_format($proforma->total, 2, '.', ',') }}</span>
                                     </div>
                                 </div>
                                 <input type="hidden" name="total_val" id="val-total" value="{{ $proforma->total }}">
                             </td>
                         </tr>
-                    </tbody>
+                    </tfoot>
                 </table>
             </div>
 
@@ -268,22 +291,37 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             </div>
         </div>
 
-        <div class="no-print flex gap-6 mt-12 mb-20">
-            <button type="button" onclick="agregarFila()" class="bg-white border-2 border-[#3d5229] text-[#3d5229] px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3d5229] hover:text-white transition-all shadow-lg">➕ Agregar Servicio</button>
-            <button type="submit" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-2xl">💾 Guardar Cambios</button>
+        <div class="no-print flex gap-4 mt-12 mb-20 flex-wrap justify-center">
+            <button type="button" onclick="agregarFila()" class="bg-white border-2 border-[#3d5229] text-[#3d5229] px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3d5229] hover:text-white transition-all shadow-lg">➕ Agregar Servicio</button>
+
+            <button type="button" onclick="procesarEnvio(false)" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl">💾 Guardar Cambios</button>
+
+            <button type="button" onclick="procesarEnvio(true)" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl">📄 Guardar y Generar PDF</button>
         </div>
     </form>
 
     <script>
-        let contadorFila = document.querySelectorAll('#tabla-cuerpo tr').length;
-
         document.addEventListener("DOMContentLoaded", function() {
             actualizarFirma();
             calcular();
+            if (parseFloat(document.getElementById('input-monto-desc').value) > 0) {
+                calcularDesdeMonto();
+            }
+
+            // Vista previa inicial de las filas cargadas (proformas existentes)
+            document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach(actualizarVistaPreviaFila);
+
+            // Renderizado en tiempo real: al escribir en la celda de descripción
+            const tablaCuerpo = document.getElementById('tabla-cuerpo');
+            if (tablaCuerpo) {
+                tablaCuerpo.addEventListener('input', function(e) {
+                    const fila = e.target.closest('tr.item-row');
+                    if (fila) actualizarVistaPreviaFila(fila);
+                });
+            }
         });
 
-        // Evento directo al enviar el formulario
-        document.getElementById('formCotizador').addEventListener('submit', function(e) {
+        function sincronizarCondiciones() {
             const cajaEditable = document.getElementById('txtCondiciones');
             const inputOculto = document.getElementById('input_condiciones_servidor');
 
@@ -309,7 +347,37 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                 }
                 inputOculto.value = textoFinal;
             }
-        });
+        }
+
+        function procesarEnvio(generarPdf = false) {
+            sincronizarCondiciones();
+            const form = document.getElementById('formCotizador');
+            const formData = new FormData(form);
+
+            if (generarPdf) {
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        const urlPdf = "{{ route('proformas.pdf', $proforma->id) }}";
+                        window.open(urlPdf, '_blank');
+                        window.location.href = "{{ route('proformas.index') }}";
+                    } else {
+                        form.submit();
+                    }
+                })
+                .catch(() => {
+                    form.submit();
+                });
+            } else {
+                form.submit();
+            }
+        }
 
         function actualizarFirma() {
             const select = document.getElementById('selector-usuario');
@@ -323,31 +391,135 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.getElementById('input-firma-tel').value = option.getAttribute('data-tel');
         }
 
+        // ============================================================
+        // FORMATEADOR DINÁMICO DE DESCRIPCIONES COMPLEJAS (JS)
+        // Espejo exacto del helper PHP formatDescripcionProforma():
+        //  - 1ª línea: título principal en negrita.
+        //  - Líneas con viñeta (•, -, –, *) y/o "Clave:" → clave en negrita.
+        //  - Saltos de línea (\n) convertidos a <br>.
+        // ============================================================
+        function escapeHtmlProforma(texto) {
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatLineaDescripcion(linea) {
+            const m = linea.match(/^(\s*[•\-–*]\s*)?([^:\n]{1,60}?):\s*([\s\S]*)$/);
+            if (m) {
+                const vineta = (m[1] || '').trim();
+                const clave = m[2].trim();
+                const resto = m[3].trim();
+                // La clave debe contener al menos una letra (evita falsos positivos tipo "10:30 am")
+                if (clave !== '' && /[A-Za-zÁÉÍÓÚáéíóúÑñÜü]/.test(clave)) {
+                    let html = '<b class="font-bold text-gray-900 desc-clave">' + escapeHtmlProforma(vineta !== '' ? vineta + ' ' : '') + escapeHtmlProforma(clave) + ':</b>';
+                    if (resto !== '') html += ' ' + escapeHtmlProforma(resto);
+                    return html;
+                }
+            }
+            return escapeHtmlProforma(linea);
+        }
+
+        function formatDescripcionProforma(texto) {
+            const lineas = String(texto || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            let html = '';
+            let primera = true;
+
+            lineas.forEach(function(linea) {
+                const limpia = linea.trim();
+                if (limpia === '') return;
+                if (primera) {
+                    html += '<strong class="font-bold text-gray-900 block mb-1 desc-titulo">' + escapeHtmlProforma(limpia) + '</strong>';
+                    primera = false;
+                    return;
+                }
+                html += '<br>' + formatLineaDescripcion(limpia);
+            });
+
+            return html;
+        }
+
+        // Actualiza el panel de vista previa en tiempo real de una fila de servicio
+        function actualizarVistaPreviaFila(row) {
+            if (!row) return;
+            const titulo = row.querySelector('input[name*="[titulo]"]');
+            const desc = row.querySelector('textarea[name*="[desc]"]');
+            const previa = row.querySelector('.vista-previa-desc');
+            if (!previa) return;
+
+            const contenido = previa.querySelector('.vista-previa-contenido');
+            const detalleTexto = desc ? desc.value : '';
+            const textoCompleto = ((titulo && titulo.value ? titulo.value.trim() : '') + '\n' + detalleTexto.trim()).trim();
+
+            if (textoCompleto === '' || detalleTexto.trim() === '') {
+                contenido.innerHTML = '';
+                previa.classList.add('hidden');
+                return;
+            }
+
+            contenido.innerHTML = formatDescripcionProforma(textoCompleto);
+            previa.classList.remove('hidden');
+        }
+
+        function reindexarFilas() {
+            document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach((row, index) => {
+                const idInput = row.querySelector('input[name*="[id]"]');
+                const tituloInput = row.querySelector('input[name*="[titulo]"]');
+                const descInput = row.querySelector('textarea[name*="[desc]"]');
+                const cantInput = row.querySelector('input[name*="[cant]"]');
+                const precioInput = row.querySelector('input[name*="[precio]"]');
+
+                if (idInput) idInput.name = `items[${index}][id]`;
+                if (tituloInput) tituloInput.name = `items[${index}][titulo]`;
+                if (descInput) descInput.name = `items[${index}][desc]`;
+                if (cantInput) cantInput.name = `items[${index}][cant]`;
+                if (precioInput) precioInput.name = `items[${index}][precio]`;
+
+                // Numeración consecutiva del título: reemplaza el prefijo "N. " (ej: 1. , 2. , 3.)
+                // por el número actual de la fila. Si el usuario escribió un título sin numerar, no se toca.
+                if (tituloInput && /^\s*\d+\.(?:\s+|$)/.test(tituloInput.value)) {
+                    tituloInput.value = tituloInput.value.replace(/^\s*\d+\.(?:\s+|$)/, (index + 1) + '. ');
+                }
+            });
+        }
+
         function agregarFila() {
             const tbody = document.getElementById('tabla-cuerpo');
             const simbolo = document.getElementById('selector-moneda').value;
+            const indexNext = tbody.querySelectorAll('tr.item-row').length;
+            const numeroTitulo = indexNext + 1;
 
-            const row = `<tr>
-                <input type="hidden" name="items[${contadorFila}][id]" value="new">
-                <td class="p-0 cell-height"><textarea name="items[${contadorFila}][desc]" class="w-full h-full p-5 outline-none resize-none text-[11px] border-none" placeholder="Escriba la descripción del servicio..."></textarea></td>
-                <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[${contadorFila}][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
+            const row = `<tr class="item-row">
+                <input type="hidden" name="items[${indexNext}][id]" value="new">
+                <td class="p-0 cell-height">
+                    <div class="w-full h-full p-5 flex flex-col justify-start">
+                        <input type="text" name="items[${indexNext}][titulo]" value="${numeroTitulo}. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
+                        <textarea name="items[${indexNext}][desc]" class="w-full flex-1 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
+                    </div>
+                </td>
+                <td class="align-middle text-center bg-gray-50/30"><input type="number" name="items[${indexNext}][cant]" value="1" class="w-full text-center font-bold qty outline-none bg-transparent" oninput="calcular()"></td>
                 <td class="align-middle text-center">
                     <div class="flex items-center justify-center gap-1">
                         <span class="symbol font-bold text-gray-400">${simbolo}</span>
-                        <input type="number" step="0.01" name="items[${contadorFila}][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
+                        <input type="number" step="0.01" name="items[${indexNext}][precio]" value="0" class="w-20 text-center font-bold price outline-none bg-transparent" oninput="calcular()">
                     </div>
                 </td>
                 <td class="align-middle text-center font-black text-gray-700 italic pr-4 subtotal-fila">${simbolo} 0.00</td>
                 <td class="align-middle text-center no-print"><button type="button" onclick="eliminarFila(this)" class="text-gray-300 hover:text-red-500 transition-colors">✕</button></td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
-            contadorFila++;
+            reindexarFilas();
+            actualizarVistaPreviaFila(tbody.lastElementChild);
             calcular();
         }
 
         function eliminarFila(btn) {
-            if(document.querySelectorAll('#tabla-cuerpo tr').length > 1) {
+            if(document.querySelectorAll('#tabla-cuerpo tr.item-row').length > 1) {
                 btn.closest('tr').remove();
+                reindexarFilas();
             }
             calcular();
         }
@@ -395,7 +567,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             document.querySelectorAll('.symbol').forEach(s => s.innerText = simbolo);
             document.querySelectorAll('.symbol-res').forEach(s => s.innerText = simbolo);
 
-            document.querySelectorAll('#tabla-cuerpo tr').forEach(row => {
+            document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach(row => {
                 const qtyInput = row.querySelector('.qty');
                 const priceInput = row.querySelector('.price');
                 if(!qtyInput || !priceInput) return;

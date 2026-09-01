@@ -76,7 +76,7 @@ class CalculadoraController extends Controller
             $proforma = new Proforma();
             $proforma->codigo_proforma = $codigoFinal;
             $proforma->cliente         = $request->input('cliente') ?? 'Consumidor Final';
-            $proforma->fecha_emision   = $fechaEmisionInput; // <-- AHORA USA LA FECHA ENVIADA
+            $proforma->fecha_emision   = $fechaEmisionInput;
             $proforma->subtotal        = (float) $request->input('subtotal_val', 0);
             $proforma->impuesto        = (float) $request->input('iva_val', 0);
             $proforma->total           = (float) $request->input('total_val', 0);
@@ -89,13 +89,30 @@ class CalculadoraController extends Controller
             $proforma->condiciones        = $request->input('condiciones');
             $proforma->descuento          = (float) $request->input('descuento_val', 0);
 
+            // --- PERSISTENCIA EXPLÍCITA DE LA MONEDA (creación) ---
+            // Se guarda el símbolo elegido en la calculadora ($ / C$) para que la
+            // edición posterior y el PDF muestren la moneda correcta.
+            if (Schema::hasColumn('proformas', 'moneda')) {
+                $proforma->moneda = $request->input('moneda_simbolo', '$');
+            }
+
             $proforma->save();
 
             $items = $request->input('items') ?? [];
             foreach ($items as $item) {
+                // El campo 'titulo' es el encabezado del servicio (ej: "1. Primer tramo") y 'desc' es el detalle.
+                // Se guardan juntos en 'descripcion': la PRIMERA línea = TÍTULO (se imprime en negrita en el PDF),
+                // el resto de líneas = DETALLE (texto normal).
+                $tituloItem   = trim((string) ($item['titulo'] ?? ''));
+                $detalleTexto = trim((string) ($item['desc'] ?? ''));
+
+                $descripcionCompleta = ($tituloItem !== '' && $detalleTexto !== '')
+                    ? $tituloItem . "\n" . $detalleTexto
+                    : ($tituloItem !== '' ? $tituloItem : $detalleTexto);
+
                 $detalle = new ProformaDetalle();
                 $detalle->proforma_id     = $proforma->id;
-                $detalle->descripcion     = $item['desc'] ?? 'Servicio Profesional';
+                $detalle->descripcion     = $descripcionCompleta !== '' ? $descripcionCompleta : 'Servicio Profesional';
                 $detalle->cantidad        = (int) ($item['cant'] ?? 1);
                 $detalle->precio_unitario = (float) ($item['precio'] ?? 0);
                 $detalle->subtotal        = $detalle->cantidad * $detalle->precio_unitario;
@@ -140,25 +157,45 @@ class CalculadoraController extends Controller
             $proforma->condiciones        = $request->input('condiciones') ?? $proforma->condiciones;
             $proforma->descuento          = (float) $request->input('descuento_val', 0);
 
+            // --- PERSISTENCIA EXPLÍCITA DE LA MONEDA (edición) ---
+            // Se guarda el símbolo enviado por el formulario ($ = Dólares / C$ = Córdobas).
+            // La moneda elegida por el usuario prevalece: el controlador NO la recalcula
+            // a partir del precio por defecto del catálogo de servicios.
+            if (Schema::hasColumn('proformas', 'moneda')) {
+                $proforma->moneda = $request->input('moneda_simbolo', '$');
+            }
+
             $proforma->save();
 
             DB::table('proforma_detalles')->where('proforma_id', $proforma->id)->delete();
 
             $items = $request->input('items') ?? [];
             foreach ($items as $item) {
-                if (empty($item['desc']) && empty($item['precio'])) {
+                // El campo 'titulo' es el encabezado del servicio (ej: "1. Primer tramo") y 'desc' es el detalle.
+                // Se guardan juntos en 'descripcion': la PRIMERA línea = TÍTULO (se imprime en negrita en el PDF),
+                // el resto de líneas = DETALLE (texto normal).
+                $tituloItem   = trim((string) ($item['titulo'] ?? ''));
+                $detalleTexto = trim((string) ($item['desc'] ?? ''));
+
+                // Omitir filas totalmente vacías (sin título, sin detalle y sin precio)
+                if ($tituloItem === '' && $detalleTexto === '' && (float) ($item['precio'] ?? 0) == 0.0) {
                     continue;
                 }
 
+                $descripcionCompleta = ($tituloItem !== '' && $detalleTexto !== '')
+                    ? $tituloItem . "\n" . $detalleTexto
+                    : ($tituloItem !== '' ? $tituloItem : $detalleTexto);
+
+                $textoFinal = $descripcionCompleta !== '' ? $descripcionCompleta : 'Servicio Profesional';
+
                 $detalle = new ProformaDetalle();
                 $detalle->proforma_id     = $proforma->id;
-                $detalle->descripcion     = $item['desc'] ?? 'Servicio Profesional';
+                $detalle->descripcion     = $textoFinal;
 
                 if (Schema::hasColumn('proforma_detalles', 'text')) {
-                    $detalle->text = $item['desc'] ?? 'Servicio Profesional';
+                    $detalle->text = $textoFinal;
                 }
 
-                $detalle->text            = $item['desc'] ?? 'Servicio Profesional';
                 $detalle->cantidad        = (int) ($item['cant'] ?? 1);
                 $detalle->precio_unitario = (float) ($item['precio'] ?? 0);
                 $detalle->subtotal        = $detalle->cantidad * $detalle->precio_unitario;
@@ -192,7 +229,55 @@ class CalculadoraController extends Controller
     }
 
     // =====================================================
-    // 5. FUNCIÓN INTERNA PRIVADA PARA RENDERIZAR EL PDF
+    // 5. GENERAR Y VER PDF POR ID (PETICIÓN GET)
+    // =====================================================
+    public function generarPDFPorId($id)
+    {
+        $proforma = Proforma::with('detalles')->findOrFail($id);
+
+        $numContador = '0001';
+        if (!empty($proforma->codigo_proforma)) {
+            $partes = explode('-', $proforma->codigo_proforma);
+            $numContador = end($partes);
+        }
+
+        $itemsBD = [];
+        foreach ($proforma->detalles as $detalle) {
+            $itemsBD[] = [
+                'desc' => $detalle->descripcion,
+                'cant' => $detalle->cantidad,
+                'precio' => $detalle->precio_unitario,
+            ];
+        }
+
+        $fakeRequest = new Request([
+            'cliente'            => $proforma->cliente,
+            'contacto'           => $proforma->observaciones,
+            'ruc'                => $proforma->ruc_cedula,
+            'telefono'           => $proforma->telefono,
+            'direccion_proyecto' => $proforma->direccion_proyecto,
+            'items'              => $itemsBD,
+            'subtotal_val'       => $proforma->subtotal,
+            'descuento_val'      => $proforma->descuento,
+            'iva_val'            => $proforma->impuesto,
+            'total_val'          => $proforma->total,
+            'moneda_simbolo'     => $proforma->moneda ?? '$',
+            'responsable_nombre' => $proforma->vendedor,
+            'condiciones'        => $proforma->condiciones,
+            'fecha_emision'      => $proforma->fecha_emision,
+        ]);
+
+        return $this->descargarPdfMapeado($fakeRequest, $numContador, $proforma->fecha_emision);
+    }
+
+    // Alias por compatibilidad
+    public function pdfPorId($id)
+    {
+        return $this->generarPDFPorId($id);
+    }
+
+    // =====================================================
+    // 6. FUNCIÓN INTERNA PRIVADA PARA RENDERIZAR EL PDF
     // =====================================================
     private function descargarPdfMapeado(Request $request, $nuevoContador, $fechaEmision = null)
     {
@@ -222,8 +307,8 @@ class CalculadoraController extends Controller
             'Maura Benavides' => ['cargo' => 'Ejecutiva de Negocios', 'tel' => '8560-0648'],
             'Stephany Mejia'  => ['cargo' => 'Gerente Comercial', 'tel' => '8998-0892'],
             'Josep Hernandez' => ['cargo' => 'Arquitecto Supervisor', 'tel' => '8373-2510'],
-            'Braulio Duarte' => ['cargo' => 'Jefe de Ventas-Empresariales', 'tel' => '7886-2971'],
-            'Jan Herrera' => ['cargo' => ' Ventas-Empresariales', 'tel' => '8380 8039']
+            'Braulio Duarte'  => ['cargo' => 'Jefe de Ventas-Empresariales', 'tel' => '7886-2971'],
+            'Jan Herrera'     => ['cargo' => ' Ventas-Empresariales', 'tel' => '8380-8039']
         ];
 
         if (array_key_exists($responsableNombre, $firmas)) {
@@ -234,7 +319,6 @@ class CalculadoraController extends Controller
             $tel   = $request->input('pdf_firma_tel', '0000-0000');
         }
 
-        // TOMA LA FECHA PASADA O LA DEL REQUEST O LA ACTUAL COMO ÚLTIMA OPCIÓN
         $fechaRaw = $fechaEmision ?? $request->input('fecha_emision') ?? date('Y-m-d');
         $fechaFormateada = date('d/m/Y', strtotime($fechaRaw));
 

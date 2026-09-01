@@ -12,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Helpers globales (formatDescripcionProforma, etc.) disponibles para
+        // todas las vistas y controladores de la aplicación.
+        require_once app_path('Support/helpers.php');
     }
 
     /**
