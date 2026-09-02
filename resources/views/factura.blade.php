@@ -224,6 +224,12 @@
             </tr>
             <tr>
                 <td colspan="2">
+                    <div class="label">Correo</div>
+                    <div class="value">{{ $correo ?? 'N/A' }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
                     <div class="label">Dirección del Proyecto</div>
                     <div class="value" style="margin-bottom: 2px;">{{ $direccion_proyecto ?? $direccion ?? 'N/A' }}</div>
                 </td>

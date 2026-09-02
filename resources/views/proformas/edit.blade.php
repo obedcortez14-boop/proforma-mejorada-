@@ -96,7 +96,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         <div class="proforma-container">
             <div class="bg-[#3d5229] p-8 flex justify-between items-center text-white relative">
                 <div class="z-10 bg-white p-3 rounded-2xl shadow-lg flex items-center justify-center min-w-[140px]">
-                    <img src="{{ asset('imagen/LOGO JPG.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
+                    <img src="{{ asset('imagen/logo.jpg') }}" alt="Logo Ready" class="h-14 w-auto object-contain">
                 </div>
                 <div class="text-center z-10">
                     <h1 class="text-xl font-extrabold uppercase tracking-[0.3em] border-y border-white/10 py-3">
@@ -132,6 +132,10 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Teléfono</label>
                     <input type="text" name="telefono" value="{{ $proforma->telefono }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="col-span-2 space-y-1.5">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Correo Electrónico</label>
+                    <input type="text" name="correo" value="{{ $proforma->correo ?? '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="col-span-2 space-y-1.5">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Dirección del Proyecto</label>
@@ -294,9 +298,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         <div class="no-print flex gap-4 mt-12 mb-20 flex-wrap justify-center">
             <button type="button" onclick="agregarFila()" class="bg-white border-2 border-[#3d5229] text-[#3d5229] px-6 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3d5229] hover:text-white transition-all shadow-lg">➕ Agregar Servicio</button>
 
-            <button type="button" onclick="procesarEnvio(false)" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl">💾 Guardar Cambios</button>
-
-            <button type="button" onclick="procesarEnvio(true)" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl">📄 Guardar y Generar PDF</button>
+            <button type="button" onclick="procesarEnvio()" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-xl">📄 Guardar y Generar PDF</button>
         </div>
     </form>
 
@@ -349,34 +351,35 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             }
         }
 
-        function procesarEnvio(generarPdf = false) {
+        // Guarda/actualiza la proforma en la base de datos y genera el PDF.
+        // Se envía el formulario vía fetch (el spoofing _method=PUT viaja dentro
+        // del FormData); si el guardado es exitoso se abre el PDF en una pestaña
+        // nueva y se redirige al historial. Si falla, se usa el envío nativo
+        // del formulario como respaldo.
+        function procesarEnvio() {
             sincronizarCondiciones();
             const form = document.getElementById('formCotizador');
             const formData = new FormData(form);
 
-            if (generarPdf) {
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        const urlPdf = "{{ route('proformas.pdf', $proforma->id) }}";
-                        window.open(urlPdf, '_blank');
-                        window.location.href = "{{ route('proformas.index') }}";
-                    } else {
-                        form.submit();
-                    }
-                })
-                .catch(() => {
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    const urlPdf = "{{ route('proformas.pdf', $proforma->id) }}";
+                    window.open(urlPdf, '_blank');
+                    window.location.href = "{{ route('proformas.index') }}";
+                } else {
                     form.submit();
-                });
-            } else {
+                }
+            })
+            .catch(() => {
                 form.submit();
-            }
+            });
         }
 
         function actualizarFirma() {

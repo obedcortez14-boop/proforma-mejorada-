@@ -127,6 +127,10 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     <input type="text" name="telefono" value="{{ isset($proforma) ? $proforma->telefono : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>
                 <div class="space-y-1.5 col-span-2">
+                    <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Correo Electrónico</label>
+                    <input type="text" name="correo" value="{{ $proforma->correo ?? '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
+                </div>
+                <div class="space-y-1.5 col-span-2">
                     <label class="text-[10px] font-extrabold text-[#3d5229] uppercase tracking-wider">Dirección del proyecto</label>
                     <input type="text" name="direccion_proyecto" value="{{ isset($proforma) ? $proforma->direccion_proyecto : '' }}" class="w-full border-b-2 border-gray-100 outline-none focus:border-[#3d5229] py-2 transition-all bg-transparent">
                 </div>

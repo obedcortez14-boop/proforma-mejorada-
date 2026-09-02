@@ -36,6 +36,12 @@ class CalculadoraController extends Controller
     // =====================================================
     public function generarPDF(Request $request)
     {
+        // VALIDACIÓN: el correo es opcional (nullable), pero si se envía debe
+        // ser una dirección de email válida y de máximo 255 caracteres.
+        $request->validate([
+            'correo' => ['nullable', 'email', 'max:255'],
+        ]);
+
         DB::beginTransaction();
 
         try {
@@ -89,6 +95,13 @@ class CalculadoraController extends Controller
             $proforma->condiciones        = $request->input('condiciones');
             $proforma->descuento          = (float) $request->input('descuento_val', 0);
 
+            // --- CORREO ELECTRÓNICO DEL CLIENTE (creación) ---
+            // Se protege con Schema::hasColumn para evitar errores si la migración
+            // aún no se ha ejecutado (misma estrategia que la columna 'moneda').
+            if (Schema::hasColumn('proformas', 'correo')) {
+                $proforma->correo = $request->input('correo');
+            }
+
             // --- PERSISTENCIA EXPLÍCITA DE LA MONEDA (creación) ---
             // Se guarda el símbolo elegido en la calculadora ($ / C$) para que la
             // edición posterior y el PDF muestren la moneda correcta.
@@ -134,6 +147,12 @@ class CalculadoraController extends Controller
     // =====================================================
     public function update(Request $request, $id)
     {
+        // VALIDACIÓN: el correo es opcional (nullable), pero si se envía debe
+        // ser una dirección de email válida y de máximo 255 caracteres.
+        $request->validate([
+            'correo' => ['nullable', 'email', 'max:255'],
+        ]);
+
         DB::beginTransaction();
 
         try {
@@ -156,6 +175,13 @@ class CalculadoraController extends Controller
             $proforma->direccion_proyecto = $request->input('direccion_proyecto') ?? $proforma->direccion_proyecto;
             $proforma->condiciones        = $request->input('condiciones') ?? $proforma->condiciones;
             $proforma->descuento          = (float) $request->input('descuento_val', 0);
+
+            // --- CORREO ELECTRÓNICO DEL CLIENTE (edición) ---
+            // Si el usuario borra el correo (cadena vacía), se guarda vacío;
+            // si el campo no viene en la petición, se conserva el valor actual.
+            if (Schema::hasColumn('proformas', 'correo')) {
+                $proforma->correo = $request->input('correo') ?? $proforma->correo;
+            }
 
             // --- PERSISTENCIA EXPLÍCITA DE LA MONEDA (edición) ---
             // Se guarda el símbolo enviado por el formulario ($ = Dólares / C$ = Córdobas).
@@ -215,6 +241,7 @@ class CalculadoraController extends Controller
                 'descuento_val' => (float) $request->input('descuento_val', 0),
                 'ruc' => $request->input('ruc') ?? $proforma->ruc_cedula,
                 'telefono' => $request->input('telefono') ?? $proforma->telefono,
+                'correo' => $request->input('correo') ?? $proforma->correo,
                 'direccion_proyecto' => $request->input('direccion_proyecto') ?? $proforma->direccion_proyecto,
                 'responsable_nombre' => $request->input('responsable_nombre') ?? $proforma->vendedor,
                 'estado' => $request->input('estado') ?? $proforma->estado
@@ -255,6 +282,7 @@ class CalculadoraController extends Controller
             'contacto'           => $proforma->observaciones,
             'ruc'                => $proforma->ruc_cedula,
             'telefono'           => $proforma->telefono,
+            'correo'             => $proforma->correo,
             'direccion_proyecto' => $proforma->direccion_proyecto,
             'items'              => $itemsBD,
             'subtotal_val'       => $proforma->subtotal,
@@ -329,6 +357,7 @@ class CalculadoraController extends Controller
             'contacto'           => $request->input('contacto'),
             'ruc'                => $request->input('ruc'),
             'telefono'           => $request->input('telefono'),
+            'correo'             => $request->input('correo'),
             'direccion_proyecto' => $request->input('direccion_proyecto'),
             'items'              => $request->input('items') ?? [],
             'subtotal'           => (float) $request->input('subtotal_val', 0),
