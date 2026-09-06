@@ -3,13 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Proforma Ready</title>
+    {{-- Montserrat (Google Fonts): pesos 500 Medium, 700 Bold y 900 Black --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         @page {
             size: letter;
             margin: 8mm 10mm;
         }
+
+        {{-- Montserrat incrustada en TTF (500/700/900): DomPDF solo acepta fuentes
+             con format('truetype') (descarta WOFF2), por lo que además del import de
+             Google Fonts se registran los TTF locales vía data-URI para garantizar
+             la jerarquía tipográfica en el PDF. --}}
+        @if (file_exists(public_path('fonts/Montserrat-Medium.ttf')))
+        @font-face {
+            font-family: 'Montserrat';
+            font-style: normal;
+            font-weight: 500;
+            src: url('data:font/truetype;base64,{{ base64_encode(file_get_contents(public_path('fonts/Montserrat-Medium.ttf'))) }}') format('truetype');
+        }
+        @endif
+        @if (file_exists(public_path('fonts/Montserrat-Bold.ttf')))
+        @font-face {
+            font-family: 'Montserrat';
+            font-style: normal;
+            font-weight: 700;
+            src: url('data:font/truetype;base64,{{ base64_encode(file_get_contents(public_path('fonts/Montserrat-Bold.ttf'))) }}') format('truetype');
+        }
+        @endif
+        @if (file_exists(public_path('fonts/Montserrat-Black.ttf')))
+        @font-face {
+            font-family: 'Montserrat';
+            font-style: normal;
+            font-weight: 900;
+            src: url('data:font/truetype;base64,{{ base64_encode(file_get_contents(public_path('fonts/Montserrat-Black.ttf'))) }}') format('truetype');
+        }
+        @endif
+
         body {
-            font-family: 'Helvetica', Arial, sans-serif;
+            font-family: 'Montserrat', 'Helvetica', Arial, sans-serif;
+            font-weight: 500;
             color: #2d3748;
             margin: 0;
             padding: 0;
@@ -100,10 +135,11 @@
         }
         .items-table th { background-color: #3d5229; color: white; font-size: 8.5px; text-transform: uppercase; padding: 5px; text-align: center; }
         .items-table td { border: 1px solid #e2e8f0; padding: 4px; font-size: 9px; }
-        .col-descripcion { word-wrap: break-word; white-space: pre-line; vertical-align: top; text-align: left; }
+        .items-table td.col-descripcion { word-wrap: break-word; white-space: pre-line; vertical-align: top; text-align: left; font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 10px; color: #374151; }
         /* Formato de descripciones complejas (formatDescripcionProforma) */
-        .desc-titulo { font-weight: bold; color: #111827; display: block; margin-bottom: 2px; }
-        .desc-clave { font-weight: bold; color: #111827; }
+        /* Jerarquía tipográfica Montserrat (descripción de servicios) */
+        .desc-titulo { font-family: 'Montserrat', sans-serif; font-weight: 900; text-transform: uppercase; font-size: 13px; color: #111827; display: block; margin-bottom: 2px; }
+        .desc-clave { font-family: 'Montserrat', sans-serif; font-weight: 700; text-transform: uppercase; font-size: 11px; color: #1f2937; }
 
         /* Estructura de Cierre Balanceada (Lado a Lado) */
         .summary-table {

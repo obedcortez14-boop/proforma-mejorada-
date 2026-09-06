@@ -27,8 +27,12 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proforma Ready - Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    {{-- Montserrat (Google Fonts): pesos 500 Medium, 700 Bold y 900 Black --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #f1f5f9; padding: 20px; }
+        body { font-family: 'Montserrat', 'Helvetica', 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #f1f5f9; padding: 20px; }
         .proforma-container { width: 100%; max-width: 1000px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 24px; overflow: hidden; border: 1px solid rgba(226, 232, 240, 0.8); }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -43,10 +47,13 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         .input-totales { background: transparent; border-bottom: 1px dashed #cbd5e1; text-align: right; outline: none; font-weight: bold; }
         .hidden-discount { display: none !important; }
         /* ===== Formateador de descripciones (formatDescripcionProforma) ===== */
-        .desc-titulo { font-weight: 700; color: #111827; display: block; margin-bottom: 4px; }
-        .desc-clave { font-weight: 700; color: #111827; }
-        .vista-previa-desc { border-top: 1px dashed #d1d5db; margin-top: 8px; padding-top: 6px; color: #4b5563; font-size: 10px; line-height: 1.5; }
-        .vista-previa-desc .desc-titulo { margin-bottom: 2px; font-size: 11px; }
+        /* ===== Jerarquía tipográfica Montserrat (descripción de servicios) ===== */
+        .desc-titulo { font-family: 'Montserrat', sans-serif; font-weight: 900 !important; text-transform: uppercase; font-size: 13px; color: #111827 !important; display: block; margin-bottom: 4px; }
+        .desc-clave { font-family: 'Montserrat', sans-serif; font-weight: 700 !important; text-transform: uppercase; font-size: 11px; color: #1f2937 !important; }
+        .vista-previa-desc { border-top: 1px dashed #d1d5db; margin-top: 8px; padding-top: 6px; font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 10px; color: #374151; line-height: 1.5; }
+        .vista-previa-desc .desc-titulo { margin-bottom: 2px; }
+        input[name$="[titulo]"] { font-family: 'Montserrat', sans-serif; font-weight: 900 !important; text-transform: uppercase; font-size: 13px; color: #111827; }
+        textarea[name$="[desc]"] { font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 10px; color: #374151; }
         .vista-previa-desc.hidden { display: none !important; }
         .vista-previa-label { font-size: 8px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #9ca3af; display: block; margin-bottom: 3px; }
         .vista-previa-contenido { display: block; }
