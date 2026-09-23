@@ -1,25 +1,9 @@
-<?php
-// --- INTEGRACIÓN DE CONTADOR FIREBASE ---
-$rutaFirebase = "https://proforma-ready-default-rtdb.firebaseio.com/contador_pdf.json";
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $rutaFirebase);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-$response = curl_exec($ch);
-curl_close($ch);
-
-$contadorFirebase = json_decode($response, true);
-
-if (is_array($contadorFirebase)) {
-    $valorContador = $contadorFirebase['contador_pdf'] ?? 1;
-} else {
-    $valorContador = ($contadorFirebase !== null) ? $contadorFirebase : 1;
-}
-
-// Si estamos editando, usamos el código que ya tiene la proforma en SQL Server
-$nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $proforma->codigo_proforma : str_pad((string)$valorContador, 4, "0", STR_PAD_LEFT);
-?>
+{{--
+    El contador ya NO se consulta por cURL desde esta vista.
+    Llega limpio desde CalculadoraController::inicio() a través de
+    App\Services\ContadorProformaService (Fase 2); los errores de conexión se
+    informan en el bloque de alertas de abajo ($errorContador).
+--}}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -61,6 +45,24 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
     </style>
 </head>
 <body>
+
+    {{-- Alertas del servidor: validaciones (@error), fallos controlados del controlador
+         (back()->withErrors()) y fallos del servicio de numeración ($errorContador).
+         Este bloque reemplazó al antiguo dd() y es el que informa cuando no hay
+         conexión con Firebase. --}}
+    @if ($errors->any() || !empty($errorContador))
+        <div class="no-print w-full max-w-[1000px] mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
+            <h3 class="text-sm font-bold text-red-800">No se pudo completar la operación:</h3>
+            <ul class="mt-2 text-xs text-red-700 list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+                @if (!empty($errorContador))
+                    <li>{{ $errorContador }}</li>
+                @endif
+            </ul>
+        </div>
+    @endif
 
     <form id="formCotizador" action="{{ isset($proforma) && isset($proforma->id) ? route('proformas.update', $proforma->id) : route('pdf.generar') }}" method="POST" target="_blank" class="w-full flex flex-col items-center">
         @csrf
@@ -108,8 +110,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                     </h1>
                 </div>
                 <div class="bg-white/10 backdrop-blur-md text-white p-4 rounded-2xl border border-white/20 text-center min-w-[160px] z-10">
-                    <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">No. <span class="text-white text-lg font-black block mt-1"><?php echo $nuevoContador; ?></span></p>
-                    <input type="hidden" name="numero_proforma" value="<?php echo $nuevoContador; ?>">
+                    <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">No. <span class="text-white text-lg font-black block mt-1"><?php echo $nuevoContador ?? '0001'; ?></span></p>
+                    <input type="hidden" name="numero_proforma" value="<?php echo $nuevoContador ?? '0001'; ?>">
                     <p class="text-[9px] font-bold border-t border-white/20 pt-2 mt-1">FECHA: {{ isset($proforma) && isset($proforma->fecha_emision) ? \Carbon\Carbon::parse($proforma->fecha_emision)->format('d/m/Y') : date('d/m/Y') }}</p>
                 </div>
             </div>
@@ -167,6 +169,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                             <tr class="item-row">
                                 <td class="p-0 cell-height">
                                     <div class="w-full h-full p-5 flex flex-col justify-start">
+                                        {{-- Posición secuencial de la línea (1, 2, 3...): el servidor la usa para conservar el orden --}}
+                                        <input type="hidden" name="items[{{ $index }}][orden]" value="{{ $detalle->orden ?? $index + 1 }}">
                                         <input type="text" name="items[{{ $index }}][titulo]" value="{{ $tituloItem }}" placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
                                         <textarea name="items[{{ $index }}][desc]" class="w-full flex-1 min-h-[60px] outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio...">{{ $detalleTexto }}</textarea>
                                         <div class="vista-previa-desc no-print hidden">
@@ -194,6 +198,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                             <tr class="item-row">
                                 <td class="p-0 cell-height">
                                     <div class="w-full h-full p-5 flex flex-col justify-start">
+                                        <input type="hidden" name="items[0][orden]" value="1">
                                         <input type="text" name="items[0][titulo]" value="1. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
                                         <textarea name="items[0][desc]" class="w-full flex-1 min-h-[60px] outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
                                         <div class="vista-previa-desc no-print hidden">
@@ -462,11 +467,16 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                 const desc = row.querySelector('textarea[name*="[desc]"]');
                 const cant = row.querySelector('input.qty');
                 const precio = row.querySelector('input.price');
+                const orden = row.querySelector('input[name*="[orden]"]');
 
                 if(titulo) titulo.setAttribute('name', `items[${index}][titulo]`);
                 if(desc) desc.setAttribute('name', `items[${index}][desc]`);
                 if(cant) cant.setAttribute('name', `items[${index}][cant]`);
                 if(precio) precio.setAttribute('name', `items[${index}][precio]`);
+                if(orden) {
+                    orden.setAttribute('name', `items[${index}][orden]`);
+                    orden.value = index + 1;        // posición secuencial: 1, 2, 3...
+                }
 
                 // Numeración consecutiva del título: reemplaza el prefijo "N. " (ej: 1. , 2. , 3.)
                 // por el número actual de la fila. Si el usuario escribió un título sin numerar, no se toca.
@@ -485,6 +495,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
             const row = `<tr class="item-row">
                 <td class="p-0 cell-height">
                     <div class="w-full h-full p-5 flex flex-col justify-start">
+                        <input type="hidden" name="items[999][orden]" value="1">
                         <input type="text" name="items[999][titulo]" value="${numeroTitulo}. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
                         <textarea name="items[999][desc]" class="w-full flex-1 outline-none resize-none text-[11px] leading-relaxed border-none" placeholder="Detalles del servicio..."></textarea>
                     </div>

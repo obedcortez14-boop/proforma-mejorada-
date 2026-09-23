@@ -73,16 +73,20 @@ class DescripcionProforma
     /**
      * Formatea una línea del detalle: si tiene el patrón "[viñeta] Clave: valor",
      * imprime la clave (con su viñeta) en negrita antes del valor.
+     *
+     * Regla anti-falsos-positivos: los dos puntos que delimitan la clave deben ir
+     * seguidos de un espacio (o terminar la línea). Así "Horario 10:30 am" o
+     * "Ver https://dominio.com: ruta" NO se interpretan como clave/valor.
      */
     protected static function formatearLineaClave(string $linea): string
     {
-        if (preg_match('/^(\s*[•\-–*]\s*)?([^:\n]{1,' . self::MAX_LONGITUD_CLAVE . '}?):\s*(.*)$/u', $linea, $m)) {
+        if (preg_match('/^(\s*[•\-–*]\s*)?([^:\n]{1,' . self::MAX_LONGITUD_CLAVE . '}?):(?:\s+(.*))?$/u', $linea, $m)) {
             $vineta = trim($m[1] ?? '');
             $clave  = trim($m[2]);
-            $resto  = trim($m[3]);
+            $resto  = trim((string) ($m[3] ?? ''));
 
-            // Evita falsos positivos tipo horas ("10:30 am"):
-            // la clave debe contener al menos una letra.
+            // La clave debe contener al menos una letra (evita falsos positivos
+            // de valores puramente numéricos o simbólicos).
             if ($clave !== '' && preg_match('/[A-Za-zÁÉÍÓÚáéíóúÑñÜü]/u', $clave)) {
                 $html  = '<b class="font-bold text-gray-900 desc-clave">';
                 $html .= $vineta !== '' ? e($vineta) . ' ' : '';

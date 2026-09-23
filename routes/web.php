@@ -3,9 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CalculadoraController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// La pantalla principal obtiene el contador a través de ContadorProformaService
+// (el controlador maneja el error de conexión y lo entrega a la vista).
+Route::get('/', [CalculadoraController::class, 'inicio']);
 
 Route::post('/generar-pdf', [CalculadoraController::class, 'generarPDF'])->name('pdf.generar');
 

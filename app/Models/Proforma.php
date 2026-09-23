@@ -20,6 +20,11 @@ class Proforma extends Model
     public function detalles(): HasMany
     {
         // Vincula este modelo con el de los detalles usando la llave foránea 'proforma_id'
-        return $this->hasMany(ProformaDetalle::class, 'proforma_id');
+        // IMPORTANTE: siempre se ordena por 'orden' (posición secuencial de la línea) y,
+        // como respaldo, por 'id'. Sin ORDER BY PostgreSQL devuelve las filas en orden
+        // físico (ctid), que se desordena al borrar/reinsertar los detalles.
+        return $this->hasMany(ProformaDetalle::class, 'proforma_id')
+                    ->orderBy('orden')
+                    ->orderBy('id');
     }
 }

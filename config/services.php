@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'firebase' => [
+        // Realtime Database que guarda el correlativo de proformas.
+        // Lo consume App\Services\ContadorProformaService (nunca las vistas).
+        'url' => env('FIREBASE_URL', 'https://proforma-ready-default-rtdb.firebaseio.com'),
+    ],
+
 ];

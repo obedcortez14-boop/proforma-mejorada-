@@ -172,6 +172,8 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
                         @endphp
                         <tr class="item-row">
                             <input type="hidden" name="items[{{ $index }}][id]" value="{{ $detalle->id }}">
+                            {{-- Posición secuencial de la línea (1, 2, 3...): el servidor la usa para conservar el orden --}}
+                            <input type="hidden" name="items[{{ $index }}][orden]" value="{{ $detalle->orden ?? $index + 1 }}">
                             <td class="p-0 cell-height">
                                 <div class="w-full h-full p-5 flex flex-col justify-start">
                                     <input type="text" name="items[{{ $index }}][titulo]" value="{{ $tituloItem }}" placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
@@ -313,6 +315,11 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         document.addEventListener("DOMContentLoaded", function() {
             actualizarFirma();
             calcular();
+
+            // Alinea la numeración visible ("1. ", "2. "...) con la posición real de cada fila
+            // y refresca los índices de los name="items[i][...]" antes de editar.
+            reindexarFilas();
+
             if (parseFloat(document.getElementById('input-monto-desc').value) > 0) {
                 calcularDesdeMonto();
             }
@@ -418,11 +425,14 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         }
 
         function formatLineaDescripcion(linea) {
-            const m = linea.match(/^(\s*[•\-–*]\s*)?([^:\n]{1,60}?):\s*([\s\S]*)$/);
+            // Los ":" que delimitan la clave deben ir seguidos de un espacio (o
+            // terminar la línea): así "Horario 10:30 am" o "Ver https://x.com: y"
+            // NO se interpretan como clave/valor.
+            const m = linea.match(/^(\s*[•\-–*]\s*)?([^:\n]{1,60}?):(?:\s+([\s\S]*))?$/);
             if (m) {
                 const vineta = (m[1] || '').trim();
                 const clave = m[2].trim();
-                const resto = m[3].trim();
+                const resto = (m[3] || '').trim();
                 // La clave debe contener al menos una letra (evita falsos positivos tipo "10:30 am")
                 if (clave !== '' && /[A-Za-zÁÉÍÓÚáéíóúÑñÜü]/.test(clave)) {
                     let html = '<b class="font-bold text-gray-900 desc-clave">' + escapeHtmlProforma(vineta !== '' ? vineta + ' ' : '') + escapeHtmlProforma(clave) + ':</b>';
@@ -477,12 +487,17 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
         function reindexarFilas() {
             document.querySelectorAll('#tabla-cuerpo tr.item-row').forEach((row, index) => {
                 const idInput = row.querySelector('input[name*="[id]"]');
+                const ordenInput = row.querySelector('input[name*="[orden]"]');
                 const tituloInput = row.querySelector('input[name*="[titulo]"]');
                 const descInput = row.querySelector('textarea[name*="[desc]"]');
                 const cantInput = row.querySelector('input[name*="[cant]"]');
                 const precioInput = row.querySelector('input[name*="[precio]"]');
 
                 if (idInput) idInput.name = `items[${index}][id]`;
+                if (ordenInput) {
+                    ordenInput.name = `items[${index}][orden]`;
+                    ordenInput.value = index + 1;   // posición secuencial: 1, 2, 3...
+                }
                 if (tituloInput) tituloInput.name = `items[${index}][titulo]`;
                 if (descInput) descInput.name = `items[${index}][desc]`;
                 if (cantInput) cantInput.name = `items[${index}][cant]`;
@@ -504,6 +519,7 @@ $nuevoContador = isset($proforma) && !empty($proforma->codigo_proforma) ? $profo
 
             const row = `<tr class="item-row">
                 <input type="hidden" name="items[${indexNext}][id]" value="new">
+                <input type="hidden" name="items[${indexNext}][orden]" value="${numeroTitulo}">
                 <td class="p-0 cell-height">
                     <div class="w-full h-full p-5 flex flex-col justify-start">
                         <input type="text" name="items[${indexNext}][titulo]" value="${numeroTitulo}. " placeholder="Ej: 1. Primer tramo" class="w-full font-bold text-gray-900 mb-1 outline-none border-none bg-transparent text-[12px]">
