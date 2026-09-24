@@ -39,6 +39,10 @@ return [
         // Realtime Database que guarda el correlativo de proformas.
         // Lo consume App\Services\ContadorProformaService (nunca las vistas).
         'url' => env('FIREBASE_URL', 'https://proforma-ready-default-rtdb.firebaseio.com'),
+        // Database secret (Firebase > Configuración del proyecto > Cuentas de servicio).
+        // Si está definido, cada petición se autentica con ?auth=... y el nodo puede
+        // cerrarse al acceso anónimo (ver docs/seguridad-firebase.md).
+        'secret' => env('FIREBASE_SECRET'),
     ],
 
 ];

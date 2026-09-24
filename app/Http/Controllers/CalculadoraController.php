@@ -81,19 +81,23 @@ class CalculadoraController extends Controller
             'correo' => ['nullable', 'email', 'max:255'],
         ]);
 
-        DB::beginTransaction();
-
+        // 1) Lectura del folio candidato FUERA de la transacción (es I/O de red: H-07).
         try {
-            // Cotización del folio a través del servicio centralizado: timeouts de 5s,
-            // TLS verificado y confirmación explícita del PATCH contra Firebase.
             $valorActual   = $this->contadorService->obtenerContadorActual();
             $nuevoContador = $this->formatearContador($valorActual);
             $codigoFinal   = 'PROF-' . date('Y') . '-' . $nuevoContador;
+        } catch (Exception $e) {
+            Log::error('No se pudo consultar el contador de proformas: ' . $e->getMessage());
 
-            // Reserva el folio: si Firebase no confirma el incremento, el servicio lanza
-            // excepción y el catch redirige con el mensaje amigable sin guardar nada.
-            $this->contadorService->incrementarContador($valorActual);
+            return back()
+                ->withInput()
+                ->withErrors(['proforma' => 'No se pudo consultar el servicio de numeración. Intente nuevamente.']);
+        }
 
+        // 2) Persistencia en UNA transacción, sin I/O de red dentro.
+        DB::beginTransaction();
+
+        try {
             // CAPTURA DE FECHA DE EMISIÓN DESDE EL FORMULARIO
             $fechaEmisionInput = $request->input('fecha_emision') ?? date('Y-m-d');
 
@@ -153,12 +157,7 @@ class CalculadoraController extends Controller
                 $detalle->save();
             }
 
-            $request->merge(['items' => $items]);
-
             DB::commit();
-
-            return $this->descargarPdfMapeado($request, $nuevoContador, $proforma->fecha_emision);
-
         } catch (Exception $e) {
             DB::rollBack();
 
@@ -175,6 +174,24 @@ class CalculadoraController extends Controller
                 ->withInput()
                 ->withErrors(['proforma' => 'No se pudo guardar la proforma. Revise los datos e intente nuevamente.']);
         }
+
+        // 3) SÓLO DESPUÉS del commit se incrementa el contador de Firebase (H-04): si el
+        //    guardado falla y hay rollback, el folio NO queda quemado. La escritura va
+        //    condicionada por ETag y verificada por el servicio (H-01).
+        try {
+            $this->contadorService->incrementarContador($valorActual);
+        } catch (Exception $e) {
+            // La proforma YA está guardada, así que la respuesta al usuario no se rompe;
+            // se deja registro crítico para reparar el contador manualmente si hiciera falta.
+            Log::critical(
+                'La proforma ' . $codigoFinal . ' se guardó, pero el contador de Firebase no pudo incrementarse: '
+                . $e->getMessage()
+            );
+        }
+
+        // 4) PRG (H-05): se redirige a la descarga del PDF por id. Un F5 repite el GET,
+        //    nunca el POST, de modo que no se duplica la proforma ni se consume otro folio.
+        return redirect()->route('proformas.pdf', $proforma->id);
     }
 
     // =====================================================
@@ -258,28 +275,11 @@ class CalculadoraController extends Controller
                 $detalle->save();
             }
 
-            // El PDF inmediato se arma con las mismas filas normalizadas (mismo orden y mismos textos)
-            $request->merge(['items' => $items]);
-
             DB::commit();
 
-            $numContador = '0001';
-            if (!empty($proforma->codigo_proforma)) {
-                $partes = explode('-', $proforma->codigo_proforma);
-                $numContador = end($partes);
-            }
-
-            $request->merge([
-                'descuento_val' => (float) $request->input('descuento_val', 0),
-                'ruc' => $request->input('ruc') ?? $proforma->ruc_cedula,
-                'telefono' => $request->input('telefono') ?? $proforma->telefono,
-                'correo' => $request->input('correo') ?? $proforma->correo,
-                'direccion_proyecto' => $request->input('direccion_proyecto') ?? $proforma->direccion_proyecto,
-                'responsable_nombre' => $request->input('responsable_nombre') ?? $proforma->vendedor,
-                'estado' => $request->input('estado') ?? $proforma->estado
-            ]);
-
-            return $this->descargarPdfMapeado($request, $numContador, $proforma->fecha_emision);
+            // PRG (H-05): la edición ya está comprometida; se redirige a la descarga del
+            // PDF para que un F5 repita el GET y nunca el PUT del formulario.
+            return redirect()->route('proformas.pdf', $proforma->id);
 
         } catch (Exception $e) {
             DB::rollBack();

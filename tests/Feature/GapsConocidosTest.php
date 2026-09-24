@@ -127,8 +127,12 @@ class GapsConocidosTest extends TestCase
             ],
         ]);
 
-        $respuesta->assertOk();
-        $respuesta->assertHeader('content-type', 'application/pdf');
+        // PRG (H-05): la edición redirige a la descarga del PDF (no devuelve el PDF directo).
+        $respuesta->assertRedirect(route('proformas.pdf', $proforma->id));
+
+        $this->get(route('proformas.pdf', $proforma->id))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
 
         $proforma->refresh();
 

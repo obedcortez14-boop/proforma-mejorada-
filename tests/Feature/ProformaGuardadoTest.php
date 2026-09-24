@@ -79,16 +79,17 @@ class ProformaGuardadoTest extends TestCase
             ->assertSee('0001');
     }
 
-    public function test_crea_una_proforma_con_el_folio_del_contador_y_genera_el_pdf(): void
+    public function test_crea_una_proforma_con_el_folio_del_contador_y_redirige_al_pdf(): void
     {
         $this->simularContadorSano(7656);
 
         $respuesta = $this->post(route('pdf.generar'), $this->payload());
 
-        $respuesta->assertOk();
-        $respuesta->assertHeader('content-type', 'application/pdf');
-
         $proforma = Proforma::with('detalles')->latest('id')->firstOrFail();
+
+        // PRG (H-05): la creación responde con una REDIRECCIÓN al PDF por id, nunca con el
+        // PDF directo; así un F5 repite el GET y no reenvía el formulario.
+        $respuesta->assertRedirect(route('proformas.pdf', $proforma->id));
 
         $this->assertSame('PROF-'.date('Y').'-7656', $proforma->codigo_proforma);
         $this->assertSame('Constructora Prueba Local', $proforma->cliente);
@@ -105,6 +106,11 @@ class ProformaGuardadoTest extends TestCase
         $this->assertCount(1, $proforma->detalles);
         $this->assertSame(1, (int) $proforma->detalles->first()->orden);
         $this->assertStringContainsString('Sistema de riego', (string) $proforma->detalles->first()->descripcion);
+
+        // Siguiendo la redirección se obtiene el PDF real (el mismo documento de antes).
+        $this->get(route('proformas.pdf', $proforma->id))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_si_el_servicio_de_numeracion_falla_no_guarda_nada_y_muestra_el_error_amigable(): void
@@ -122,6 +128,54 @@ class ProformaGuardadoTest extends TestCase
         $respuesta->assertSessionHasErrors('proforma');
 
         $this->assertSame(0, Proforma::count());
+        $this->assertSame(0, ProformaDetalle::count());
+    }
+
+    public function test_el_refresco_repetido_del_pdf_no_duplica_la_proforma_ni_consume_otro_folio(): void
+    {
+        // 'once()' en el mock hace FALLAR la prueba si el contador se incrementa dos veces.
+        $this->mock(ContadorProformaService::class, function ($mock) {
+            $mock->shouldReceive('obtenerContadorActual')->once()->andReturn(7656);
+            $mock->shouldReceive('incrementarContador')->once()->with(7656)->andReturn(7657);
+        });
+
+        $respuesta = $this->post(route('pdf.generar'), $this->payload());
+        $respuesta->assertRedirect();
+
+        $urlPdf = $respuesta->headers->get('Location');
+
+        // Simula el F5 (varias veces) sobre la pestaña del PDF: sólo se repite el GET.
+        $this->get($urlPdf)->assertOk();
+        $this->get($urlPdf)->assertOk();
+        $this->get($urlPdf)->assertOk();
+
+        $this->assertSame(1, Proforma::count());
+        $this->assertSame(1, ProformaDetalle::count());
+    }
+
+    public function test_si_el_folio_ya_existe_el_guardado_falla_sin_incrementar_el_contador(): void
+    {
+        // El contador entregó un folio ya emitido: el INSERT debe romper contra el índice
+        // UNIQUE y la transacción hace rollback (H-04: no se quema ningún folio).
+        Proforma::create([
+            'codigo_proforma' => 'PROF-'.date('Y').'-7656',
+            'cliente'         => 'Folio ya emitido',
+            'fecha_emision'   => '2026-09-23',
+            'estado'          => 'Borrador',
+        ]);
+
+        $this->mock(ContadorProformaService::class, function ($mock) {
+            $mock->shouldReceive('obtenerContadorActual')->andReturn(7656);
+            // Como el guardado falla, el contador NUNCA debe consumirse.
+            $mock->shouldReceive('incrementarContador')->never();
+        });
+
+        $respuesta = $this->post(route('pdf.generar'), $this->payload());
+
+        $respuesta->assertRedirect();
+        $respuesta->assertSessionHasErrors('proforma');
+
+        $this->assertSame(1, Proforma::count());
         $this->assertSame(0, ProformaDetalle::count());
     }
 }
